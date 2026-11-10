@@ -1,0 +1,34 @@
+name: inspect-public-trace-schemas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect_trace_schemas.yml"
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download public trace files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p traces
+          curl -L --fail --retry 3 -o traces/alibaba.csv \
+            https://raw.githubusercontent.com/alibaba/clusterdata/master/cluster-trace-gpu-v2023/csv/openb_pod_list_default.csv
+          curl -L --fail --retry 3 -o traces/acme_kalos.csv \
+            https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/job_trace/trace_kalos.csv
+          curl -L --fail --retry 3 -o traces/helios.csv \
+            'https://huggingface.co/datasets/Qinghao/AcmeTrace/resolve/main/data/job_trace/trace_previous_work/helios_trace.csv?download=true'
+          curl -L --fail --retry 3 -o traces/philly.csv \
+            'https://huggingface.co/datasets/Qinghao/AcmeTrace/resolve/main/data/job_trace/trace_previous_work/philly_trace.csv?download=true'
+      - name: Inspect headers and sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in traces/*.csv; do
+            echo "===== $f ====="
+            stat -c 'bytes=%s' "$f"
+            head -n 3 "$f" | cut -c1-1200
+          done
