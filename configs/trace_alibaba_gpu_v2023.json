@@ -1,0 +1,78 @@
+{
+  "dataset_id": "alibaba_gpu_v2023",
+  "status": "locked-pre-results",
+  "source": {
+    "repository": "alibaba/clusterdata",
+    "path": "cluster-trace-gpu-v2023/csv/openb_pod_list_default.csv",
+    "ref": "master",
+    "upstream_blob_sha": "bd82505791c723c5b11486ef457fb338529912c0",
+    "official_description": "Alibaba production GPU-sharing trace used by the Kubernetes Scheduler Simulator"
+  },
+  "eligible_snapshot": "data/alibaba_gpu_v2023_eligible_succeeded.csv",
+  "eligibility": {
+    "pod_phase": "Succeeded",
+    "num_gpu": 1,
+    "gpu_milli_min_exclusive": 0,
+    "gpu_milli_max_inclusive": 1000,
+    "cpu_cores_max_inclusive": 16,
+    "memory_gib_max_inclusive": 64,
+    "scheduled_time_required": true,
+    "positive_runtime_required": true
+  },
+  "eligible_count": 178,
+  "sampling": {
+    "method": "contiguous block from creation-time-sorted eligible pool",
+    "anchor_rng": "numpy.random.default_rng(20261110).random()",
+    "anchor_fraction": 0.6260788463455607,
+    "primary_size": 64,
+    "scalability_sizes": [
+      32,
+      64,
+      128
+    ],
+    "windows": {
+      "32": {
+        "start_index": 91,
+        "end_index": 122,
+        "first_task": "openb-pod-4130",
+        "last_task": "openb-pod-5256"
+      },
+      "64": {
+        "start_index": 71,
+        "end_index": 134,
+        "first_task": "openb-pod-3131",
+        "last_task": "openb-pod-5985"
+      },
+      "128": {
+        "start_index": 31,
+        "end_index": 158,
+        "first_task": "openb-pod-1437",
+        "last_task": "openb-pod-6694"
+      }
+    }
+  },
+  "workload_mapping": {
+    "gpu_demand": "gpu_milli / 1000 for num_gpu=1",
+    "cpu_demand": "cpu_milli / 1000",
+    "memory_demand_gib": "memory_mib / 1024",
+    "bandwidth_demand": 0,
+    "arrival_time": "creation_time relative to first task in selected window",
+    "observed_runtime": "(deletion_time - scheduled_time) / 3600",
+    "deadline": "(deletion_time - creation_time) / 3600 added to normalized arrival",
+    "carbon_class_by_qos": {
+      "LS": "critical",
+      "Burstable": "deferred",
+      "BE": "flexible"
+    }
+  },
+  "service_time": {
+    "primary_rule": "observed_runtime / resource FP32 speed factor",
+    "reference_hardware": "RTX A6000 normalized speed factor 1.0",
+    "limitation": "source runtime is treated as an A6000-equivalent baseline; this is a reconstruction proxy, not a measured cross-GPU benchmark"
+  },
+  "qpeo_features": {
+    "performance_affinity": "row-wise normalized inverse service time",
+    "thermal_headroom": "1 - resource_max_power / max_resource_max_power",
+    "dependency_matrix": "all zeros because this trace does not expose inter-job dependency metadata"
+  }
+}
