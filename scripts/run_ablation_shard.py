@@ -1,4 +1,4 @@
-"""Run five single-component QPEO ablations against the locked real scenarios.
+"""Run five QPEO operator ablations plus one independent random-search control.
 
 Separate feature branch; not part of the already-running primary experiment batch.
 Each output contains five genuinely executed ablations, not reconstructed or
@@ -22,7 +22,9 @@ if str(ROOT) not in sys.path:
 
 import numpy as np
 
+from qpeo.baselines import CommonBaselineConfig
 from qpeo.config import ManuscriptQPEOConfig
+from qpeo.random_search import run_elitist_random_search
 from qpeo.optimizer import (
     QPEOOperatorSwitches,
     ReconstructionQPEOSettings,
@@ -90,6 +92,49 @@ def evaluate_ablation_variants(
     return records
 
 
+def evaluate_random_search_control(
+    problem,
+    inputs,
+    settings: ReconstructionQPEOSettings,
+    *,
+    seed: int,
+    population_size: int,
+    max_iterations: int,
+) -> dict:
+    """Independent random-key search with an identical feasible decoder."""
+    clear_simulation_cache()
+    begin = perf_counter()
+    res = run_elitist_random_search(
+        problem,
+        inputs.simulator_inputs,
+        settings.scalar_weights,
+        config=CommonBaselineConfig(
+            population_size=population_size,
+            max_iterations=max_iterations,
+            carbon_replay=inputs.carbon_replay,
+        ),
+        seed=seed,
+    )
+    elapsed = perf_counter() - begin
+    cache = simulation_cache_stats()
+    return {
+        "variant": "elitist_random_search",
+        "seed": seed,
+        "runtime_seconds": elapsed,
+        "guide_objectives": res.guide_objectives.as_array().tolist(),
+        "guide_objective_history": np.asarray(
+            res.guide_objective_history, dtype=float
+        ).tolist(),
+        "archive_size": len(res.archive.entries),
+        "archive_size_history": np.asarray(
+            res.archive_size_history, dtype=int
+        ).tolist(),
+        "entropy_history": [],
+        "simulation_cache_hits": int(cache["hits"]),
+        "simulation_cache_misses": int(cache["misses"]),
+    }
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--scenario", required=True, choices=sorted(SCENARIOS))
@@ -139,6 +184,14 @@ def main() -> None:
         population_size=P,
         max_iterations=T,
     )
+    random_control = evaluate_random_search_control(
+        bundle.problem,
+        bundle.qpeo_inputs,
+        settings,
+        seed=seed,
+        population_size=P,
+        max_iterations=T,
+    )
     payload = {
         "schema_version": "qpeo-ablation-shard-v1",
         "final_protocol": is_final,
@@ -154,9 +207,12 @@ def main() -> None:
         "carbon_source": replay.source_name,
         "carbon_rows": replay.rows,
         "variants": records,
+        "secondary_baselines": [random_control],
     }
     if len(records) != len(VARIANTS):
         raise RuntimeError("Expected five ablation variants")
+    if len(payload["secondary_baselines"]) != 1:
+        raise RuntimeError("Expected one separate random-search comparator")
     with tempfile.NamedTemporaryFile(
         "w", dir=outdir, delete=False, encoding="utf-8", suffix=".tmp"
     ) as tmp:
