@@ -75,6 +75,6 @@ def run_reviewer_critical_suite(problem:ProblemInstance,qpeo_inputs:QPEOInputs,q
 
 
 def run_full_suite(problem:ProblemInstance,qpeo_inputs:QPEOInputs,qpeo_settings:ReconstructionQPEOSettings,scalar_weights:Sequence[float],*,seeds:Sequence[int],population_size:int=50,max_iterations:int=500)->ExperimentSuite:
-    """Run QPEO plus all 12 baselines under a matched budget."""
+    """Run all 13 methods with matched P, T, problem instances and seed list.\n\n    The algorithms may make different numbers of simulation/evaluation calls per\n    iteration. The experimental report must distinguish iteration matching from\n    evaluation-budget matching and report per-method simulator calls and runtimes.\n    """
     names=("QPEO","PSO","DE","GWO","WOA","ABC","GA","HS","FA","ACO","FPA","QIEA","NSGA-II")
     return _run_suite(problem,qpeo_inputs,qpeo_settings,scalar_weights,seeds=seeds,population_size=population_size,max_iterations=max_iterations,names=names)
