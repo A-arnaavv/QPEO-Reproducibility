@@ -134,11 +134,16 @@
     "status": "locked-pre-results",
     "source": "NESO regional carbon-intensity forecast",
     "window_utc": "2026-01-05 through 2026-01-11",
-    "threshold_rule": "worst-case row minimum / worst-case row 3rd-lowest / replay maximum + epsilon (guarantees >=1/3/all carbon-feasible resources per replay step)"
+    "threshold_rule": "worst-case row minimum / worst-case row 3rd-lowest / replay maximum + epsilon (guarantees >=1/3/all carbon-feasible resources per replay step)",
+    "snapshot": "data/carbon/neso_regional_2026-01-05_2026-01-11.csv",
+    "snapshot_rows_in_locked_window": 336,
+    "derived_thresholds_gco2_per_kwh": {
+      "critical": 192,
+      "deferred": 281,
+      "flexible": 391
+    }
   },
-  "pending_artifacts_before_final_runs": [
-    "materialize and checksum the locked NESO carbon replay CSV snapshot"
-  ],
+  "pending_artifacts_before_final_runs": [],
   "dynamic_carbon": {
     "status": "implemented-and-tested",
     "applies_to": "QPEO and all 12 baselines",
@@ -218,6 +223,29 @@
       "carbon_class_rule": "deferred for all jobs because Helios exposes no source priority/SLA class",
       "deadline_rule": "source observed submit_time to end_time",
       "service_time_rule": "source duration scaled by locked FP32 resource speed factors"
+    },
+    "alibaba_spot_gpu_2026_a100": {
+      "status": "locked-pre-results",
+      "config": "configs/trace_alibaba_spot_a100.json",
+      "snapshot": "data/alibaba_spot_a100_selected_128.csv",
+      "upstream_blob_sha": "f2a0dcbc26b5a1a047e49a7efa886e86ec9cde32",
+      "eligible_count": 83416,
+      "source_gpu_model": "A100-SXM4-80GB",
+      "source_fp32_tflops": 19.5,
+      "primary_jobs": 64,
+      "scalability_jobs": [
+        32,
+        64,
+        128
+      ],
+      "primary_window": [
+        "441953",
+        "298924"
+      ],
+      "scope": "single-worker A100 jobs with 0<gpu_request<=1, cpu_request<=16, positive duration, job_type in {HP,Spot}",
+      "deadline_rule": "HP: arrival + source duration; Spot: infinity and excluded from SLA denominator",
+      "carbon_class_rule": "HP=critical; Spot=flexible",
+      "service_time_rule": "source A100 duration scaled by source_fp32/target_resource_fp32"
     }
   }
 }
