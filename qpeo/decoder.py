@@ -14,9 +14,6 @@ def feasible_score_decode(problem: ProblemInstance, scores: np.ndarray) -> np.nd
     if np.any(~np.isfinite(S)):
         raise ValueError("scores must be finite.")
 
-    gpu_remaining = np.asarray([r.gpu_capacity for r in problem.resources], dtype=float)
-    mem_remaining = np.asarray([r.memory_capacity for r in problem.resources], dtype=float)
-
     individually_feasible: list[np.ndarray] = []
     difficulty: list[tuple[int, float, int]] = []
     max_gpu = max(float(r.gpu_capacity) for r in problem.resources)
@@ -42,25 +39,11 @@ def feasible_score_decode(problem: ProblemInstance, scores: np.ndarray) -> np.nd
     X = np.zeros((M, N), dtype=int)
 
     for i in order:
-        w = problem.workloads[i]
         resource_order = np.argsort(-S[i], kind="stable")
-        placed = False
-        for j in resource_order:
-            if not individually_feasible[i][j]:
-                continue
-            if (
-                w.gpu_demand <= gpu_remaining[j] + 1e-12
-                and w.memory_demand <= mem_remaining[j] + 1e-12
-            ):
-                X[i, j] = 1
-                gpu_remaining[j] -= float(w.gpu_demand)
-                mem_remaining[j] -= float(w.memory_demand)
-                placed = True
-                break
-        if not placed:
-            raise NoFeasibleAssignment(
-                "Common greedy decoder could not construct a feasible assignment. "
-                "A feasible assignment may still exist; this is a reconstruction-protocol limitation."
-            )
+        allowed = individually_feasible[i]
+        chosen = next((int(j) for j in resource_order if allowed[j]), None)
+        if chosen is None:
+            raise NoFeasibleAssignment(f"Workload {problem.workloads[i].name!r} has no feasible resource.")
+        X[i, chosen] = 1
 
     return X
