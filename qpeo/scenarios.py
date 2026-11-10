@@ -118,3 +118,89 @@ def build_alibaba_gpu_v2023_scenario(
         problem=problem,
         qpeo_inputs=qinputs,
     )
+
+
+def build_elasticflow_itp_scenario(
+    snapshot_path: str | Path,
+    trace_config_path: str | Path,
+    resource_environment: ResourceEnvironment,
+    carbon_replay: CarbonReplay,
+    *,
+    size: int = 64,
+) -> ScenarioBundle:
+    cfg=json.loads(Path(trace_config_path).read_text(encoding="utf-8"))
+    if cfg.get("dataset_id")!="microsoft_elasticflow_itp_cluster08":
+        raise ValueError("Unexpected ElasticFlow trace config dataset_id")
+    with Path(snapshot_path).open(newline="",encoding="utf-8-sig") as f:
+        rows=list(csv.DictReader(f))
+    if len(rows)!=int(cfg["selection"]["eligible_count"]):
+        raise ValueError("ElasticFlow snapshot row count does not match locked config")
+    rows.sort(key=lambda r:(float(r["submission_time"]),r["job_id"]))
+    window=cfg["selection"]["windows"].get(str(int(size)))
+    if window is None:
+        raise ValueError(f"No locked ElasticFlow window for size={size}")
+    start,end=int(window["start_index"]),int(window["end_index"])
+    selected=rows[start:end+1]
+    if len(selected)!=size:
+        raise ValueError("Locked ElasticFlow window has wrong size")
+    if selected[0]["job_id"]!=window["first_task"] or selected[-1]["job_id"]!=window["last_task"]:
+        raise ValueError("ElasticFlow snapshot does not match locked window task IDs")
+
+    base_submission=float(selected[0]["submission_time"])
+    q33=float(cfg["deadline"]["slack_ratio_tertiles"]["q33"])
+    q67=float(cfg["deadline"]["slack_ratio_tertiles"]["q67"])
+    workloads=[]; runtimes=[]; ids=[]
+    for row in selected:
+        submission=float(row["submission_time"])
+        duration=float(row["duration"])
+        deadline_abs=float(row["deadline"])
+        ratio=float(row["deadline_slack_ratio"])
+        if duration<=0 or deadline_abs<=submission:
+            raise ValueError("Locked ElasticFlow snapshot contains invalid duration/deadline")
+        if ratio<=q33:
+            cclass=CarbonClass.CRITICAL
+        elif ratio<=q67:
+            cclass=CarbonClass.DEFERRED
+        else:
+            cclass=CarbonClass.FLEXIBLE
+        arrival=(submission-base_submission)/3600.0
+        deadline=(deadline_abs-base_submission)/3600.0
+        workloads.append(Workload(
+            name=row["job_id"],
+            cpu_demand=0.0,
+            gpu_demand=1.0,
+            memory_demand=0.0,
+            bandwidth_demand=0.0,
+            arrival_time=arrival,
+            deadline=deadline,
+            carbon_class=cclass,
+        ))
+        runtimes.append(duration/3600.0)
+        ids.append(row["job_id"])
+
+    if tuple(slot.name for slot in resource_environment.slots)!=carbon_replay.slot_names:
+        raise ValueError("Resource environment and carbon replay slot order differ")
+    problem=resource_environment.build_problem(
+        workloads,carbon_replay.intensities[0],carbon_replay.thresholds(),
+        cost_profile="primary_tier_index",
+    )
+    speed=resource_environment.speed_factors()
+    base_runtime=np.asarray(runtimes,dtype=float)
+    service=base_runtime[:,None]/speed[None,:]
+    inv=1.0/service
+    performance=inv/np.max(inv,axis=1,keepdims=True)
+    pmax=resource_environment.max_power_kw()
+    thermal=1.0-pmax/np.max(pmax)
+    dependency=np.zeros((size,size),dtype=float)
+    sim=SimulatorInputs(service,resource_environment.power_model(),"allocated_gpu_hours")
+    qinputs=QPEOInputs(sim,performance,thermal,dependency,carbon_replay)
+    qinputs.validate(size,len(problem.resources))
+    return ScenarioBundle(
+        dataset_id="microsoft_elasticflow_itp_cluster08",
+        task_ids=tuple(ids),
+        workloads=tuple(workloads),
+        base_runtime_hours=base_runtime,
+        service_time_hours=service,
+        problem=problem,
+        qpeo_inputs=qinputs,
+    )
