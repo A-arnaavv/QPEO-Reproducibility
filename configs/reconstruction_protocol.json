@@ -194,6 +194,30 @@
       "missing_resource_fields": "CPU, memory, bandwidth set to zero/non-binding because the source does not provide them",
       "carbon_class_rule": "tertiles of source-generated deadline slack ratio",
       "service_time_rule": "raw duration scaled by locked FP32 resource speed factors"
+    },
+    "helios_earth": {
+      "status": "locked-pre-results",
+      "config": "configs/trace_helios_earth.json",
+      "snapshot": "data/helios_earth_selected_128.csv",
+      "archive_blob_sha": "1a48d5e0fb816fe9bbf1ad7086e7dec90923e5c6",
+      "archive_sha256": "3d22a5f6c0ae669e2fcbfe4200fa9c48664507bc397c677bad8f085222c032ac",
+      "eligible_count": 293903,
+      "cluster_rule": "Helios cluster with largest completed single-GPU pool",
+      "primary_jobs": 64,
+      "scalability_jobs": [
+        32,
+        64,
+        128
+      ],
+      "primary_window": [
+        "1738622",
+        "1739705"
+      ],
+      "source_fields": "gpu_num, cpu_num, submit_time, start_time, end_time, duration, queue, state",
+      "missing_resource_fields": "memory and bandwidth set to zero/non-binding because the source does not provide them",
+      "carbon_class_rule": "deferred for all jobs because Helios exposes no source priority/SLA class",
+      "deadline_rule": "source observed submit_time to end_time",
+      "service_time_rule": "source duration scaled by locked FP32 resource speed factors"
     }
   }
 }
