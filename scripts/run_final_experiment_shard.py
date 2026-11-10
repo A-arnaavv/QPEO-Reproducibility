@@ -60,6 +60,8 @@ def _serialize_result(record):
         "runtime_seconds":record.runtime_seconds,
         "guide_objectives":record.guide_objectives.tolist(),
         "archive_size":record.archive_size,
+        "simulation_cache_hits":int(record.cache_hits),
+        "simulation_cache_misses":int(record.cache_misses),
         "guide_objective_history":np.asarray(result.guide_objective_history,dtype=float).tolist(),
         "archive_size_history":np.asarray(result.archive_size_history,dtype=int).tolist(),
     }
