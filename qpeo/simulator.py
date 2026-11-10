@@ -11,6 +11,12 @@ from .models import EvaluationState, ProblemInstance
 
 BillingMode = Literal["active_resource_hours", "allocated_gpu_hours"]
 
+# Numerical tolerance for event timestamps. 1e-12 h is 3.6 nanoseconds;
+# sub-tolerance overlaps can arise when back-to-back jobs have separately
+# rounded floating-point start/end times. Ignore only these zero-duration
+# numerical segments, never intervals long enough to consume capacity.
+TIME_ROUNDOFF_EPS_HOURS = 1e-12
+
 # Per-algorithm deterministic schedule memoization. Dynamic carbon changes objective
 # evaluation and feasibility, but not service times, arrivals, capacities or the
 # resulting schedule for an already-decoded assignment.
@@ -151,7 +157,7 @@ def _integrate_resource_energy(
         dt = t - prev_t
         if dt < -1e-12:
             raise RuntimeError("Events are not time ordered.")
-        if dt > 0 and demand_now > 1e-15:
+        if dt > TIME_ROUNDOFF_EPS_HOURS and demand_now > 1e-15:
             util = demand_now / gpu_capacity
             if util > 1.0 + 1e-9:
                 raise ValueError(
@@ -185,7 +191,7 @@ def _window_capacity_ok(
             boundaries.add(max(start,a)); boundaries.add(min(end,b))
     ordered=sorted(boundaries)
     for left,right in zip(ordered[:-1],ordered[1:]):
-        if right-left<=1e-15:
+        if right-left<=TIME_ROUNDOFF_EPS_HOURS:
             continue
         mid=(left+right)/2
         gpu=gpu_demand; mem=memory_demand
