@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from scripts.collect_final_artifacts import collect
-from tests.test_final_shard_audit import sample_protocol, sample_shard
+from test_final_shard_audit import sample_protocol, sample_shard
 
 
 def test_collect_accepts_valid_and_rejects_conflicting_existing(tmp_path):
