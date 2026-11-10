@@ -4,6 +4,7 @@ import csv, json
 import numpy as np
 
 from qpeo.carbon import CarbonReplay
+from qpeo.models import CarbonClass
 from qpeo.resource_environment import load_resource_environment
 from qpeo.scenarios import build_alibaba_gpu_v2023_scenario, build_elasticflow_itp_scenario, build_helios_earth_scenario
 
