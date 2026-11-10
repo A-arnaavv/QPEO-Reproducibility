@@ -1,0 +1,40 @@
+name: materialize-elasticflow-trace
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/materialize_elasticflow_trace.py"
+      - ".github/workflows/materialize_elasticflow.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download and verify official archives
+        run: |
+          mkdir -p audit/raw audit/exp
+          curl -fL https://raw.githubusercontent.com/microsoft/elasticflow-traces/main/data/raw-traces.tar.gz -o /tmp/raw.tar.gz
+          curl -fL https://raw.githubusercontent.com/microsoft/elasticflow-traces/main/data/elasticflow-traces.tar.gz -o /tmp/exp.tar.gz
+          echo "67398e1a89245c50ae0881bf997e6cda0c95f9f47980af5bc56d67998965669f  /tmp/raw.tar.gz" | sha256sum -c -
+          echo "e9c20b73de61d2702aef086aebc995cbc432affbd0f09969cf30879c5d1a83c4  /tmp/exp.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/raw.tar.gz -C audit/raw
+          tar -xzf /tmp/exp.tar.gz -C audit/exp
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Materialize locked trace
+        run: python scripts/materialize_elasticflow_trace.py
+      - name: Commit snapshot and config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/elasticflow_cluster08_single_gpu.csv configs/trace_elasticflow_itp.json
+          git commit -m "Lock Microsoft ElasticFlow ITP TRACE2 snapshot"
+          git push
