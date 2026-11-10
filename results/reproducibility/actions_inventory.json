@@ -1,0 +1,402 @@
+{
+  "purpose": "Read-only inventory of GitHub Actions outcomes and retained artifacts; no experiments executed",
+  "repository": "A-arnaavv/QPEO-Reproducibility",
+  "workflows": {
+    "primary_batch": {
+      "recent_runs": [
+        {
+          "artifact_count": 67,
+          "artifact_names": [
+            "qpeo-final-helios_earth-seed10",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed27",
+            "qpeo-final-helios_earth-seed7",
+            "qpeo-final-helios_earth-seed6",
+            "qpeo-final-helios_earth-seed8",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed21",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed15",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed24",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed26",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed29",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed18",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed28",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed22",
+            "qpeo-final-helios_earth-seed5",
+            "qpeo-final-helios_earth-seed2",
+            "qpeo-final-helios_earth-seed1",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed25",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed12",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed19",
+            "qpeo-final-helios_earth-seed4",
+            "qpeo-final-helios_earth-seed3",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed10",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed17",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed23",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed11",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed5",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed16",
+            "qpeo-final-alibaba_gpu_v2023-seed29",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed14",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed8",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed13",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed1",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed2",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed9",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed3",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed6",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed4",
+            "qpeo-final-alibaba_gpu_v2023-seed24",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed20",
+            "qpeo-final-alibaba_gpu_v2023-seed26",
+            "qpeo-final-alibaba_gpu_v2023-seed25",
+            "qpeo-final-alibaba_gpu_v2023-seed17",
+            "qpeo-final-microsoft_elasticflow_itp_cluster08-seed7",
+            "qpeo-final-alibaba_gpu_v2023-seed21",
+            "qpeo-final-alibaba_gpu_v2023-seed23",
+            "qpeo-final-alibaba_gpu_v2023-seed28",
+            "qpeo-final-alibaba_gpu_v2023-seed27",
+            "qpeo-final-alibaba_gpu_v2023-seed20",
+            "qpeo-final-alibaba_gpu_v2023-seed9",
+            "qpeo-final-alibaba_gpu_v2023-seed10",
+            "qpeo-final-alibaba_gpu_v2023-seed19",
+            "qpeo-final-alibaba_gpu_v2023-seed15",
+            "qpeo-final-alibaba_gpu_v2023-seed4",
+            "qpeo-final-alibaba_gpu_v2023-seed1",
+            "qpeo-final-alibaba_gpu_v2023-seed22",
+            "qpeo-final-alibaba_gpu_v2023-seed2",
+            "qpeo-final-alibaba_gpu_v2023-seed3",
+            "qpeo-final-alibaba_gpu_v2023-seed14",
+            "qpeo-final-alibaba_gpu_v2023-seed7",
+            "qpeo-final-alibaba_gpu_v2023-seed13",
+            "qpeo-final-alibaba_gpu_v2023-seed18",
+            "qpeo-final-alibaba_gpu_v2023-seed12",
+            "qpeo-final-alibaba_gpu_v2023-seed16",
+            "qpeo-final-alibaba_gpu_v2023-seed11",
+            "qpeo-final-alibaba_gpu_v2023-seed6",
+            "qpeo-final-alibaba_gpu_v2023-seed8",
+            "qpeo-final-alibaba_gpu_v2023-seed5"
+          ],
+          "artifacts_unavailable": false,
+          "conclusion": null,
+          "created_at": "2026-11-10T14:55:40Z",
+          "event": "push",
+          "expired_artifact_count": 0,
+          "head_sha": "7d1efcf0980620e66db01b4d7c32d80081038471",
+          "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809",
+          "id": 42839069809,
+          "jobs_by_conclusion": {
+            "in_progress": 16,
+            "queued": 33,
+            "success": 67
+          },
+          "jobs_inspected": 116,
+          "name": "locked-final-parallel-batch",
+          "status": "queued",
+          "unsuccessful_jobs": [
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909076207",
+              "name": "helios_earth / seed 9",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909076299",
+              "name": "helios_earth / seed 11",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909078890",
+              "name": "helios_earth / seed 14",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909079145",
+              "name": "helios_earth / seed 15",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909079175",
+              "name": "helios_earth / seed 16",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909079274",
+              "name": "helios_earth / seed 13",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909079787",
+              "name": "helios_earth / seed 18",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909079799",
+              "name": "helios_earth / seed 21",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909080057",
+              "name": "helios_earth / seed 20",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909080189",
+              "name": "helios_earth / seed 12",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909080230",
+              "name": "helios_earth / seed 19",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909080429",
+              "name": "helios_earth / seed 17",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909082233",
+              "name": "helios_earth / seed 22",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909082346",
+              "name": "helios_earth / seed 23",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909082802",
+              "name": "helios_earth / seed 24",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909083043",
+              "name": "helios_earth / seed 25",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909083626",
+              "name": "helios_earth / seed 26",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909083762",
+              "name": "helios_earth / seed 27",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909084400",
+              "name": "helios_earth / seed 28",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909085076",
+              "name": "helios_earth / seed 29",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909085382",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 1",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909085942",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 4",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909086014",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 5",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909086025",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 2",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909086550",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 3",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909087287",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 7",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909087307",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 8",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909088390",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 9",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909088599",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 10",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909088819",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 11",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909089297",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 12",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909089616",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 6",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909089679",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 13",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909091103",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 15",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909091554",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 18",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909091708",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 17",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909091773",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 16",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909092011",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 19",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909092185",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 20",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909093106",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 21",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909093867",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 23",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909094373",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 22",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909094765",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 24",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909094874",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 25",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909094974",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 26",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909095008",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 27",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909095152",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 28",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909096119",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 29",
+              "status": "queued"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42839069809/job/129909107289",
+              "name": "alibaba_spot_gpu_2026_a100 / seed 14",
+              "status": "queued"
+            }
+          ],
+          "updated_at": "2026-11-10T14:55:40Z"
+        }
+      ],
+      "runs_found_in_first_200": 1,
+      "workflow_filename": "locked_final_parallel_batch.yml",
+      "workflow_not_found": false
+    },
+    "primary_collector": {
+      "recent_runs": [],
+      "runs_found_in_first_200": 0,
+      "workflow_filename": "collect_completed_final_batch.yml",
+      "workflow_not_found": false
+    },
+    "seed0_collector": {
+      "recent_runs": [],
+      "runs_found_in_first_200": 0,
+      "workflow_filename": "collect_seed0_rechecks.yml",
+      "workflow_not_found": false
+    },
+    "seed0_parity": {
+      "recent_runs": [
+        {
+          "artifact_count": 1,
+          "artifact_names": [
+            "qpeo-seed0-parity-alibaba_gpu_v2023"
+          ],
+          "artifacts_unavailable": false,
+          "conclusion": null,
+          "created_at": "2026-11-10T16:10:47Z",
+          "event": "push",
+          "expired_artifact_count": 0,
+          "head_sha": "d20329ae28b939efe5be916e7859ed446f1800d4",
+          "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42851921995",
+          "id": 42851921995,
+          "jobs_by_conclusion": {
+            "in_progress": 2,
+            "success": 1
+          },
+          "jobs_inspected": 3,
+          "name": "seed0-canonical-implementation-parity",
+          "status": "in_progress",
+          "unsuccessful_jobs": [
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42851921995/job/129954615900",
+              "name": "canonical seed-0 / alibaba_spot_gpu_2026_a100",
+              "status": "in_progress"
+            },
+            {
+              "html_url": "https://github.com/A-arnaavv/QPEO-Reproducibility/actions/runs/42851921995/job/129954616339",
+              "name": "canonical seed-0 / microsoft_elasticflow_itp_cluster08",
+              "status": "in_progress"
+            }
+          ],
+          "updated_at": "2026-11-10T16:10:50Z"
+        }
+      ],
+      "runs_found_in_first_200": 1,
+      "workflow_filename": "verify_canonical_seed00.yml",
+      "workflow_not_found": false
+    }
+  }
+}
