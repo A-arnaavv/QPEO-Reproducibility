@@ -1,0 +1,23 @@
+{
+  "protocol_version": "v7-resource-pool",
+  "hardware_templates": {
+    "a5000": {"vendor_model":"NVIDIA RTX A5000","memory_gib":24,"max_power_w":230,"layer":"cloud","source_kind":"vendor-published"},
+    "a6000": {"vendor_model":"NVIDIA RTX A6000","memory_gib":48,"max_power_w":300,"layer":"cloud","source_kind":"vendor-published"},
+    "rtx4090": {"vendor_model":"NVIDIA GeForce RTX 4090","memory_gib":24,"max_power_w":450,"layer":"serverless","source_kind":"vendor-published"},
+    "agx_orin_64": {"vendor_model":"NVIDIA Jetson AGX Orin 64GB","memory_gib":64,"max_power_w":60,"layer":"edge","source_kind":"vendor-published"}
+  },
+  "primary_topology_reconstruction": {
+    "counts":{"a5000":4,"a6000":4,"rtx4090":4,"agx_orin_64":4},
+    "total_logical_gpu_resources":16,
+    "purpose":"balanced 16-resource cloud-edge-serverless reconstruction topology",
+    "status":"pre-results reconstruction choice"
+  },
+  "unresolved_before_final_runs": {
+    "idle_fraction_of_max":null,
+    "cost_per_gpu_hour":{"a5000":null,"a6000":null,"rtx4090":null,"agx_orin_64":null},
+    "speed_factor":{"a5000":null,"a6000":null,"rtx4090":null,"agx_orin_64":null},
+    "carbon_intensity_by_layer":{"cloud":null,"edge":null,"serverless":null}
+  },
+  "power_model_rule":{"equation":"P(u) = P_idle + (P_max - P_idle) * u","note":"P_max is vendor-published; P_idle is a reconstruction setting frozen before final runs."},
+  "planned_sensitivity":{"idle_fraction_of_max":[0.10,0.20,0.30],"topology_scale_multipliers":[1,2,4],"speed_factor_perturbation":[-0.20,0.0,0.20]}
+}
