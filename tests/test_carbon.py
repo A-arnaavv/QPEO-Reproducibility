@@ -20,7 +20,11 @@ def test_iteration_mapping_and_threshold_order():
     assert np.allclose(replay.at_iteration(0,6),[100,200])
     assert np.allclose(replay.at_iteration(6,6),[160,260])
     th=replay.thresholds()
-    assert th[CarbonClass.CRITICAL]<th[CarbonClass.DEFERRED]<th[CarbonClass.FLEXIBLE]
+    assert th[CarbonClass.CRITICAL]<=th[CarbonClass.DEFERRED]<=th[CarbonClass.FLEXIBLE]
+    for row in replay.intensities:
+        assert np.sum(row<=th[CarbonClass.CRITICAL])>=1
+        assert np.sum(row<=th[CarbonClass.DEFERRED])>=min(3,replay.resources)
+        assert np.sum(row<=th[CarbonClass.FLEXIBLE])==replay.resources
 
 def test_neso_loader_filters_locked_window_and_fills_missing(tmp_path:Path):
     cfg=Path(__file__).parents[1]/"configs"/"carbon_replay_v1.json"
