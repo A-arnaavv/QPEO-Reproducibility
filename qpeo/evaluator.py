@@ -17,8 +17,10 @@ def check_constraints(problem:ProblemInstance,X:np.ndarray,*,atol:float=1e-12)->
     mem_d=np.asarray([w.memory_demand for w in problem.workloads],float)
     gpu_cap=np.asarray([r.gpu_capacity for r in problem.resources],float)
     mem_cap=np.asarray([r.memory_capacity for r in problem.resources],float)
-    gpu_ok=bool(np.all(gpu_d@X<=gpu_cap+atol))
-    mem_ok=bool(np.all(mem_d@X<=mem_cap+atol))
+    # Temporal capacity is enforced by the simulator. At assignment level, each
+    # workload must individually fit its selected resource.
+    gpu_ok=bool(np.all(gpu_d[:,None]*X<=gpu_cap[None,:]+atol))
+    mem_ok=bool(np.all(mem_d[:,None]*X<=mem_cap[None,:]+atol))
     carbon_ok=True; cviol=[]
     for i,w in enumerate(problem.workloads):
         thr=float(problem.carbon_thresholds[w.carbon_class])
@@ -41,17 +43,19 @@ def evaluate_objectives(problem:ProblemInstance,X:np.ndarray,state:EvaluationSta
     if require_feasible:
         rep=check_constraints(problem,X)
         if not rep.feasible: raise ValueError("Infeasible schedule: "+" | ".join(rep.violations))
-    gpu_d=np.asarray([w.gpu_demand for w in problem.workloads],float)
-    gpu_cap=np.asarray([r.gpu_capacity for r in problem.resources],float)
-    if np.any(gpu_cap<=0): raise ValueError("GPU capacities must be > 0.")
-    f1=-float(np.mean((gpu_d@X)/gpu_cap))
+    arrivals=np.asarray([w.arrival_time for w in problem.workloads],float)
+    completion=np.asarray(state.completion_times,float)
+    horizon=float(completion.max()-arrivals.min())
+    if horizon<=0: raise ValueError("Scheduling horizon must be > 0.")
+    # Time-aware average GPU utilisation over the global scheduling horizon.
+    # allocated_gpu_fraction_hours already integrates gpu_demand / gpu_capacity.
+    allocated=np.asarray(state.allocated_gpu_fraction_hours,float)
+    f1=-float(np.mean(allocated/horizon))
     energy=np.asarray(state.energy_kwh_by_resource,float)
     f2=float(energy.sum())
     ci=np.asarray([r.carbon_intensity for r in problem.resources],float)
     f3=float(np.dot(energy,ci)/f2) if f2>0 else float(zero_energy_carbon_value)
-    completion=np.asarray(state.completion_times,float)
-    arrivals=np.asarray([w.arrival_time for w in problem.workloads],float)
-    f4=float(completion.max()-arrivals.min())
+    f4=horizon
     deadlines=np.asarray([w.deadline for w in problem.workloads],float)
     f5=float(100*np.mean(completion>deadlines))
     costs=np.asarray([r.cost_per_gpu_hour for r in problem.resources],float)
