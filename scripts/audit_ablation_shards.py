@@ -85,10 +85,41 @@ def validate_ablation_shard(path: Path, primary: dict) -> dict:
             raise ValueError(f"{label}: non-finite runtime")
         if float(a["runtime_seconds"]) < 0:
             raise ValueError(f"{label}: negative runtime")
+    secondary = d.get("secondary_baselines")
+    if not isinstance(secondary, list) or len(secondary) != 1:
+        raise ValueError("Expected one independent random-search comparator")
+    comparator = secondary[0]
+    if comparator.get("variant") != "elitist_random_search":
+        raise ValueError("Unexpected random-search comparator name")
+    if comparator.get("seed") != seed:
+        raise ValueError("Random-search seed does not match the locked list")
+    if len(comparator.get("guide_objectives", [])) != 6:
+        raise ValueError("Random-search objective vector shape mismatch")
+    if not all(math.isfinite(float(x)) for x in comparator["guide_objectives"]):
+        raise ValueError("Non-finite random-search objectives")
+    history = comparator.get("guide_objective_history")
+    if not isinstance(history, list) or len(history) != T + 1:
+        raise ValueError("Random-search objective history shape mismatch")
+    if any(
+        not isinstance(row, list) or len(row) != 6
+        or not all(math.isfinite(float(x)) for x in row)
+        for row in history
+    ):
+        raise ValueError("Non-finite or malformed random-search objective history")
+    if comparator.get("entropy_history") != []:
+        raise ValueError("Random search must not claim QPEO entropy history")
+    for k in ("simulation_cache_hits", "simulation_cache_misses"):
+        if type(comparator.get(k)) is not int or comparator[k] < 0:
+            raise ValueError(f"Random search has invalid {k}")
+    if not math.isfinite(float(comparator.get("runtime_seconds", float("nan")))) or float(comparator["runtime_seconds"]) < 0:
+        raise ValueError("Invalid random-search runtime")
+    if type(comparator.get("archive_size")) is not int or comparator["archive_size"] < 1:
+        raise ValueError("Invalid random-search archive size")
     return {
         "scenario": scenario, "seed_index": seed_index, "seed": seed,
         "filename": path.name, "sha256": hashlib.sha256(raw).hexdigest(),
         "variants": list(VARIANTS),
+        "secondary_baselines": ["elitist_random_search"],
     }
 
 
