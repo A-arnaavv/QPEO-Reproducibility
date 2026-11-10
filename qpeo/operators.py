@@ -136,10 +136,11 @@ def ebws_update(
     if dep.shape!=(M,M): raise ValueError("dependency must have shape (M,M).")
     if not (0<=delta_dep<=1 and 0<=phi<=1): raise ValueError("delta_dep and phi must be in [0,1].")
     base=T.copy()
-    for i in range(M):
-        for ip in range(M):
-            if i!=ip and dep[i,ip]>delta_dep:
-                T[ip]=T[ip]+phi*dep[i,ip]*(base[i]-base[ip])
+    active = np.where(dep > delta_dep, dep, 0.0)
+    np.fill_diagonal(active, 0.0)
+    incoming = active.T @ base
+    strength = active.sum(axis=0)[:, None]
+    T = base + phi * (incoming - strength * base)
     return np.clip(T,0,np.pi/2)
 
 def biodiversity_restore(
@@ -162,3 +163,29 @@ def biodiversity_restore(
         pop[mask]=best[None,:]+delta_bio*perturb
         pop[mask]=np.clip(pop[mask],0,np.pi/2)
     return pop
+
+
+def population_entropy_from_angles(population: np.ndarray) -> float:
+    """
+    Exact low-rank von Neumann entropy for reconstruction convention R1.
+
+    For rho_bar = (1/P) sum_n |psi_n><psi_n|, the non-zero eigenvalues
+    equal those of the P x P Gram matrix G = Psi Psi^T / P.
+    """
+    pop = np.asarray(population, dtype=float)
+    if pop.ndim != 2 or pop.shape[0] < 1 or pop.shape[1] < 1:
+        raise ValueError("population must have shape (P,D).")
+    validate_angles(pop)
+    amp = np.sin(pop)
+    norms = np.linalg.norm(amp, axis=1, keepdims=True)
+    zero = norms[:, 0] <= 1e-15
+    if np.any(zero):
+        amp[zero] = 1.0 / math.sqrt(pop.shape[1])
+        norms[zero] = 1.0
+    psi = amp / norms
+    gram = (psi @ psi.T) / pop.shape[0]
+    gram = (gram + gram.T) / 2.0
+    vals = np.linalg.eigvalsh(gram)
+    vals = np.clip(vals, 0.0, 1.0)
+    vals = vals[vals > 1e-15]
+    return float(-np.sum(vals * np.log2(vals)))
