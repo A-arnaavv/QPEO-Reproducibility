@@ -14,12 +14,15 @@ def check_constraints(problem:ProblemInstance,X:np.ndarray,*,atol:float=1e-12)->
     binary_ok=bool(np.all(np.isclose(X,0,atol=atol)|np.isclose(X,1,atol=atol)))
     exactly_one_ok=bool(np.all(np.isclose(X.sum(axis=1),1,atol=atol)))
     gpu_d=np.asarray([w.gpu_demand for w in problem.workloads],float)
+    cpu_d=np.asarray([w.cpu_demand for w in problem.workloads],float)
     mem_d=np.asarray([w.memory_demand for w in problem.workloads],float)
     gpu_cap=np.asarray([r.gpu_capacity for r in problem.resources],float)
+    cpu_cap=np.asarray([np.inf if r.cpu_capacity is None else r.cpu_capacity for r in problem.resources],float)
     mem_cap=np.asarray([r.memory_capacity for r in problem.resources],float)
-    # Temporal capacity is enforced by the simulator. At assignment level, each
-    # workload must individually fit its selected resource.
+    # Temporal aggregate capacity is enforced by the simulator. At assignment
+    # level, each workload must individually fit its selected resource.
     gpu_ok=bool(np.all(gpu_d[:,None]*X<=gpu_cap[None,:]+atol))
+    cpu_ok=bool(np.all(cpu_d[:,None]*X<=cpu_cap[None,:]+atol))
     mem_ok=bool(np.all(mem_d[:,None]*X<=mem_cap[None,:]+atol))
     carbon_ok=True; cviol=[]
     for i,w in enumerate(problem.workloads):
@@ -32,9 +35,10 @@ def check_constraints(problem:ProblemInstance,X:np.ndarray,*,atol:float=1e-12)->
     if not binary_ok: violations.append("Assignment matrix is not binary.")
     if not exactly_one_ok: violations.append("Each workload must be assigned exactly once.")
     if not gpu_ok: violations.append("GPU-capacity constraint violated.")
+    if not cpu_ok: violations.append("CPU-capacity constraint violated.")
     if not mem_ok: violations.append("Memory-capacity constraint violated.")
     if not carbon_ok: violations.append("Carbon-threshold constraint violated: "+", ".join(cviol))
-    return ConstraintReport(not violations,binary_ok,exactly_one_ok,gpu_ok,mem_ok,carbon_ok,tuple(violations))
+    return ConstraintReport(not violations,binary_ok,exactly_one_ok,gpu_ok,cpu_ok,mem_ok,carbon_ok,tuple(violations))
 
 def evaluate_objectives(problem:ProblemInstance,X:np.ndarray,state:EvaluationState,*,require_feasible=True,zero_energy_carbon_value=0.0)->ObjectiveVector:
     M,N=len(problem.workloads),len(problem.resources)
