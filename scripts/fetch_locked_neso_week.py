@@ -4,7 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 
 START="2026-01-05T00:00Z"
-END="2026-01-11T23:59Z"
+END="2026-01-12T00:00Z"
 REGIONS={
   1:("North Scotland","North Scotland Carbon Intensity Forecast"),
   3:("North West England","North West England Carbon Intensity Forecast"),
