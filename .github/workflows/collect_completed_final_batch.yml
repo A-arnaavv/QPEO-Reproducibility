@@ -1,0 +1,88 @@
+name: collect-completed-final-batch
+
+# Trigger once when the source-triggered 116-job experiment batch finishes.
+on:
+  workflow_run:
+    workflows: ["locked-final-parallel-batch"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  recover-and-aggregate:
+    if: ${{ github.event.workflow_run.head_repository.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download individually backed-up result shards
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: qpeo-final-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/qpeo-results
+      - name: Validate and merge result artifacts without replacing existing data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/collect_final_artifacts.py \
+            --source "$RUNNER_TEMP/qpeo-results"
+          python scripts/audit_final_shards.py
+          python scripts/aggregate_final_results.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('results/final_shard_audit.json')
+          d=json.loads(p.read_text())
+          print('BATCH_RESULTS_RESTORED',d['valid_shards'],'/',d['expected_shards'])
+          if d['valid_shards']==d['expected_shards'] and d['invalid_shards']==0:
+              Path('/tmp/qpeo_all_final_valid').write_text('1')
+          PY
+      - name: Run final result-validation unit tests
+        run: python -m pytest -q tests/test_final_shard_audit.py tests/test_collect_final_artifacts.py
+      - name: Strict aggregation if the 120 shards are complete
+        shell: bash
+        run: |
+          if [ -f /tmp/qpeo_all_final_valid ]; then
+            python scripts/aggregate_final_results.py --require-complete
+          else
+            echo 'INCOMPLETE FINAL SET; retain valid shards and rerun only missing seeds later.'
+          fi
+      - name: Commit validated shards and remove one-time workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/raw results/final_shard_audit.json results/artifact_collection_report.json results/final_summary_long.csv
+          for file in \
+            .github/workflows/locked_final_parallel_batch.yml \
+            .github/workflows/collect_completed_final_batch.yml; do
+            if [ -f "$file" ]; then git rm "$file"; fi
+          done
+          git commit -m "Preserve validated parallel final-protocol shards and coverage audit"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if ! git rebase origin/main; then
+              echo 'REBASE_CONFLICT: artifacts remain available in the batch run.'
+              exit 1
+            fi
+            if git push origin HEAD:main; then
+              echo 'FINAL_BATCH_RESULTS_COMMITTED'
+              exit 0
+            fi
+          done
+          echo 'PUSH_FAILED: batch artifacts still available from GitHub Actions.'
+          exit 1
