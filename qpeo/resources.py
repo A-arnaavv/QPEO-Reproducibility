@@ -17,12 +17,13 @@ class HardwareTemplate:
     vendor_model: str
     memory_gib: float
     max_power_w: float
+    fp32_tflops: float
     layer: str
     source_kind: str = "vendor-published"
 
     def validate(self) -> None:
-        if self.memory_gib <= 0 or self.max_power_w <= 0:
-            raise ValueError("Hardware memory and maximum power must be positive.")
+        if self.memory_gib <= 0 or self.max_power_w <= 0 or self.fp32_tflops <= 0:
+            raise ValueError("Hardware memory, maximum power, and FP32 throughput must be positive.")
         if self.layer not in {"cloud", "edge", "serverless"}:
             raise ValueError(f"Unsupported layer: {self.layer}")
 
@@ -61,6 +62,7 @@ def load_resource_config(path: str | Path) -> tuple[dict[str, HardwareTemplate],
             vendor_model=str(raw["vendor_model"]),
             memory_gib=float(raw["memory_gib"]),
             max_power_w=float(raw["max_power_w"]),
+            fp32_tflops=float(raw["fp32_tflops"]),
             layer=str(raw["layer"]),
             source_kind=str(raw.get("source_kind", "vendor-published")),
         )
@@ -117,3 +119,15 @@ def build_resource_pool(
         np.asarray(speed, dtype=float),
         template_keys,
     )
+
+
+def fp32_normalized_speed_factors(
+    templates: Mapping[str, HardwareTemplate],
+    *,
+    baseline_key: str = "a5000",
+) -> dict[str, float]:
+    """Vendor-derived relative compute factors from published FP32 throughput."""
+    if baseline_key not in templates:
+        raise ValueError(f"Unknown baseline template: {baseline_key}")
+    base = float(templates[baseline_key].fp32_tflops)
+    return {key: float(t.fp32_tflops / base) for key, t in templates.items()}
