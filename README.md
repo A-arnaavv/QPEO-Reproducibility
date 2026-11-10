@@ -48,3 +48,11 @@ This toy script is only a software validation and must not be cited as a manuscr
 experiment.
 
 See `DATASET_AUDIT.md` and `RECONSTRUCTION_LOG.md` before running paper experiments.
+
+
+## v6 pre-registered reconstruction protocol
+`configs/reconstruction_protocol.json` freezes all outcome-independent choices that can
+be fixed before the real trace experiments: 30 deterministic seeds, equal primary
+six-objective guide weights, equal primary ecological-compatibility weights,
+dependency settings, and sensitivity grids. Hardware- and trace-dependent settings
+remain explicitly unresolved and must be fixed before the final runs.
