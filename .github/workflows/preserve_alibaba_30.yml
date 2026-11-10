@@ -1,0 +1,78 @@
+name: one-time-preserve-alibaba-thirty-seeds
+
+# Recover already-completed Alibaba jobs while the other datasets are still running.
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/preserve_alibaba_30.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  preserve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked environment
+        run: python -m pip install -r requirements.txt
+      - name: Download 29 completed Alibaba result artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 42839069809
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: qpeo-final-alibaba_gpu_v2023-seed*
+          merge-multiple: true
+          path: ${{ runner.temp }}/alibaba-completed
+      - name: Validate every recovered shard and 30-seed Alibaba coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/collect_final_artifacts.py --source "$RUNNER_TEMP/alibaba-completed"
+          python scripts/audit_final_shards.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          recovered=json.loads(Path('results/artifact_collection_report.json').read_text())
+          audit=json.loads(Path('results/final_shard_audit.json').read_text())
+          if recovered['invalid_or_conflicting']:
+              raise SystemExit('REFUSED: invalid or conflicting result artifacts')
+          if recovered['source_artifact_count'] != 29:
+              raise SystemExit(f"Expected all 29 independently completed Alibaba seeds, found {recovered['source_artifact_count']}")
+          ali=audit['by_scenario']['alibaba_gpu_v2023']
+          if ali['completed_seed_indices'] != list(range(30)):
+              raise SystemExit(f"Incomplete Alibaba seed coverage: {ali}")
+          if audit['invalid_shards']:
+              raise SystemExit('REFUSED: invalid saved result files')
+          print('ALIBABA_30_SEEDS_VALIDATED: 30 independent seeds, 13 algorithms each')
+          PY
+      - name: Commit validated results with safe retries and remove workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/raw results/artifact_collection_report.json results/final_shard_audit.json
+          git rm .github/workflows/preserve_alibaba_30.yml
+          git commit -m "Permanently preserve 30 verified Alibaba primary seeds"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if ! git rebase origin/main; then
+              echo "REBASE_CONFLICT: completed results remain safely in the batch artifacts."
+              exit 1
+            fi
+            if git push origin HEAD:main; then
+              echo 'ALIBABA_ALL_30_SAVED'
+              exit 0
+            fi
+          done
+          echo 'PUSH_FAILED: result artifacts retained in GitHub Actions'
+          exit 1
