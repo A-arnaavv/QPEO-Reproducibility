@@ -7,6 +7,7 @@ import math
 import numpy as np
 
 from .archive import ParetoArchive
+from .carbon import CarbonReplay, with_carbon_intensities
 from .baseline_common import BaselineResult, evaluate_scores, guide_index, objective_matrix, scalar_values
 from .models import ObjectiveVector, ProblemInstance
 from .operators import mantegna_levy_step
@@ -17,12 +18,42 @@ from .simulator import SimulatorInputs
 class CommonBaselineConfig:
     population_size: int = 50
     max_iterations: int = 500
+    carbon_replay: CarbonReplay | None = None
 
     def validate(self) -> None:
         if self.population_size < 4:
             raise ValueError("population_size must be >= 4.")
         if self.max_iterations < 1:
             raise ValueError("max_iterations must be >= 1.")
+
+
+def _problem_for_iteration(base_problem: ProblemInstance, cfg: CommonBaselineConfig, t: int) -> ProblemInstance:
+    replay = cfg.carbon_replay
+    if replay is None:
+        return base_problem
+    expected = tuple(r.name for r in base_problem.resources)
+    if replay.slot_names != expected:
+        raise ValueError("carbon replay slot order must match problem resource names")
+    return with_carbon_intensities(base_problem, replay.at_iteration(t, cfg.max_iterations))
+
+
+def _evaluate_population(problem: ProblemInstance, simulator_inputs: SimulatorInputs, pop: np.ndarray, transform=None):
+    assignments: list[np.ndarray] = []
+    objectives: list[ObjectiveVector] = []
+    for i in range(len(pop)):
+        scores = pop[i] if transform is None else transform(pop[i])
+        X, obj = evaluate_scores(problem, simulator_inputs, scores)
+        assignments.append(X); objectives.append(obj)
+    return assignments, objectives
+
+
+def _dynamic_refresh(base_problem, cfg, t, simulator_inputs, pop, transform=None):
+    if cfg.carbon_replay is None:
+        return None
+    current = _problem_for_iteration(base_problem, cfg, t)
+    assignments, objectives = _evaluate_population(current, simulator_inputs, pop, transform)
+    archive = _initialize_archive(pop, assignments, objectives)
+    return current, assignments, objectives, archive
 
 
 def _validate_weights(weights: Sequence[float]) -> np.ndarray:
@@ -88,6 +119,8 @@ def run_fpa(
     """
     cfg = config or CommonBaselineConfig()
     cfg.validate(); _validate_weights(scalar_weights)
+    base_problem = problem
+    problem = _problem_for_iteration(base_problem, cfg, 0)
     if not (0 <= switch_probability <= 1):
         raise ValueError("switch_probability must be in [0,1].")
     M, N = len(problem.workloads), len(problem.resources)
@@ -104,7 +137,10 @@ def run_fpa(
     guide_history: list[np.ndarray] = [objectives[guide_index(objectives, scalar_weights)].as_array().copy()]
     archive_history: list[int] = [len(archive.entries)]
 
-    for _ in range(cfg.max_iterations):
+    for t in range(1, cfg.max_iterations + 1):
+        refreshed = _dynamic_refresh(base_problem, cfg, t, simulator_inputs, pop)
+        if refreshed is not None:
+            problem, assignments, objectives, archive = refreshed
         values = scalar_values(objectives, scalar_weights)
         best_idx = int(np.argmin(values))
         best = pop[best_idx].copy()
@@ -259,6 +295,8 @@ def run_nsga2(
     """NSGA-II baseline over MxN continuous random-key score matrices."""
     cfg = config or CommonBaselineConfig()
     cfg.validate(); _validate_weights(scalar_weights)
+    base_problem = problem
+    problem = _problem_for_iteration(base_problem, cfg, 0)
     M, N = len(problem.workloads), len(problem.resources)
     D = M * N
     rng = np.random.default_rng(seed)
@@ -274,7 +312,10 @@ def run_nsga2(
     guide_history: list[np.ndarray] = [objectives[guide_index(objectives, scalar_weights)].as_array().copy()]
     archive_history: list[int] = [len(archive.entries)]
 
-    for _ in range(cfg.max_iterations):
+    for t in range(1, cfg.max_iterations + 1):
+        refreshed = _dynamic_refresh(base_problem, cfg, t, simulator_inputs, pop)
+        if refreshed is not None:
+            problem, assignments, objectives, archive = refreshed
         F = objective_matrix(objectives)
         rank, crowd = _rank_and_crowding(F)
         best_history.append(float(np.min(scalar_values(objectives, scalar_weights))))
@@ -348,6 +389,8 @@ def run_qiea(
     """
     cfg = config or CommonBaselineConfig()
     cfg.validate(); _validate_weights(scalar_weights)
+    base_problem = problem
+    problem = _problem_for_iteration(base_problem, cfg, 0)
     if rotation_angle <= 0:
         raise ValueError("rotation_angle must be > 0.")
     if not (0 <= mutation_probability <= 1):
@@ -367,7 +410,10 @@ def run_qiea(
     guide_history: list[np.ndarray] = [objectives[guide_index(objectives, scalar_weights)].as_array().copy()]
     archive_history: list[int] = [len(archive.entries)]
 
-    for _ in range(cfg.max_iterations):
+    for t in range(1, cfg.max_iterations + 1):
+        refreshed = _dynamic_refresh(base_problem, cfg, t, simulator_inputs, theta, lambda z: np.sin(z) ** 2)
+        if refreshed is not None:
+            problem, assignments, objectives, archive = refreshed
         vals = scalar_values(objectives, scalar_weights)
         g = int(np.argmin(vals))
         guide_bits = assignments[g].astype(float)
@@ -421,6 +467,7 @@ def run_pso(
 ) -> BaselineResult:
     """PSO reconstruction over continuous MxN scheduling scores."""
     cfg = config or CommonBaselineConfig(); cfg.validate(); _validate_weights(scalar_weights)
+    base_problem = problem; problem = _problem_for_iteration(base_problem, cfg, 0)
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); vel=np.zeros_like(pop)
     assignments=[]; objectives=[]
@@ -428,7 +475,11 @@ def run_pso(
         X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
     pbest=pop.copy(); pbest_obj=list(objectives)
     archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
-    for _ in range(cfg.max_iterations):
+    for t in range(1, cfg.max_iterations + 1):
+        refreshed=_dynamic_refresh(base_problem,cfg,t,simulator_inputs,pop)
+        if refreshed is not None:
+            problem,assignments,objectives,archive=refreshed
+            _,pbest_obj=_evaluate_population(problem,simulator_inputs,pbest)
         pvals=scalar_values(pbest_obj,scalar_weights); g=int(np.argmin(pvals)); gbest=pbest[g].copy(); bh.append(float(pvals[g]))
         for i in range(cfg.population_size):
             r1=rng.uniform(size=(M,N)); r2=rng.uniform(size=(M,N))
@@ -456,12 +507,16 @@ def run_de(
 ) -> BaselineResult:
     """DE/rand/1/bin reconstruction."""
     cfg=config or CommonBaselineConfig(); cfg.validate(); _validate_weights(scalar_weights)
+    base_problem=problem; problem=_problem_for_iteration(base_problem,cfg,0)
     M,N=len(problem.workloads),len(problem.resources); D=M*N; rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size):
         X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
     archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
-    for _ in range(cfg.max_iterations):
+    for t in range(1, cfg.max_iterations + 1):
+        refreshed=_dynamic_refresh(base_problem,cfg,t,simulator_inputs,pop)
+        if refreshed is not None:
+            problem,assignments,objectives,archive=refreshed
         bh.append(float(np.min(scalar_values(objectives,scalar_weights))))
         for i in range(cfg.population_size):
             choices=np.delete(np.arange(cfg.population_size),i); a,b,c=rng.choice(choices,3,replace=False)
@@ -480,13 +535,17 @@ def run_de(
 def run_gwo(problem, simulator_inputs, scalar_weights, *, config=None, seed=0) -> BaselineResult:
     """Grey Wolf Optimizer reconstruction."""
     cfg=config or CommonBaselineConfig(); cfg.validate(); _validate_weights(scalar_weights)
+    base_problem=problem; problem=_problem_for_iteration(base_problem,cfg,0)
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
     archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
-    for t in range(cfg.max_iterations):
+    for step in range(1,cfg.max_iterations+1):
+        refreshed=_dynamic_refresh(base_problem,cfg,step,simulator_inputs,pop)
+        if refreshed is not None:
+            problem,assignments,objectives,archive=refreshed
         vals=scalar_values(objectives,scalar_weights); order=np.argsort(vals); alpha,beta,delta=[pop[k].copy() for k in order[:3]]; bh.append(float(vals[order[0]]))
-        a=2.0*(1.0-t/max(cfg.max_iterations-1,1)); newpop=[]
+        t=step-1; a=2.0*(1.0-t/max(cfg.max_iterations-1,1)); newpop=[]
         for i in range(cfg.population_size):
             parts=[]
             for leader in (alpha,beta,delta):
@@ -503,12 +562,16 @@ def run_gwo(problem, simulator_inputs, scalar_weights, *, config=None, seed=0) -
 def run_woa(problem, simulator_inputs, scalar_weights, *, config=None, b:float=1.0, seed=0) -> BaselineResult:
     """Whale Optimization Algorithm reconstruction."""
     cfg=config or CommonBaselineConfig(); cfg.validate(); _validate_weights(scalar_weights)
+    base_problem=problem; problem=_problem_for_iteration(base_problem,cfg,0)
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
     archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
-    for t in range(cfg.max_iterations):
-        vals=scalar_values(objectives,scalar_weights); leader=pop[int(np.argmin(vals))].copy(); bh.append(float(np.min(vals))); a=2-2*t/max(cfg.max_iterations-1,1)
+    for step in range(1,cfg.max_iterations+1):
+        refreshed=_dynamic_refresh(base_problem,cfg,step,simulator_inputs,pop)
+        if refreshed is not None:
+            problem,assignments,objectives,archive=refreshed
+        vals=scalar_values(objectives,scalar_weights); leader=pop[int(np.argmin(vals))].copy(); bh.append(float(np.min(vals))); t=step-1; a=2-2*t/max(cfg.max_iterations-1,1)
         proposals=[]
         for i in range(cfg.population_size):
             r1,r2,p=float(rng.uniform()),float(rng.uniform()),float(rng.uniform()); A=2*a*r1-a; C=2*r2
@@ -530,6 +593,7 @@ def run_woa(problem, simulator_inputs, scalar_weights, *, config=None, b:float=1
 def run_abc(problem, simulator_inputs, scalar_weights, *, config=None, limit:int=20, seed=0) -> BaselineResult:
     """Artificial Bee Colony reconstruction."""
     cfg=config or CommonBaselineConfig(); cfg.validate(); _validate_weights(scalar_weights)
+    base_problem=problem; problem=_problem_for_iteration(base_problem,cfg,0)
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); trials=np.zeros(cfg.population_size,int); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
@@ -557,11 +621,15 @@ def run_abc(problem, simulator_inputs, scalar_weights, *, config=None, limit:int
 def run_ga(problem, simulator_inputs, scalar_weights, *, config=None, crossover_probability=.9, mutation_probability=None, seed=0) -> BaselineResult:
     """Real-coded genetic algorithm reconstruction."""
     cfg=config or CommonBaselineConfig(); cfg.validate(); _validate_weights(scalar_weights)
+    base_problem=problem; problem=_problem_for_iteration(base_problem,cfg,0)
     M,N=len(problem.workloads),len(problem.resources); D=M*N; rng=np.random.default_rng(seed); mp=(1/D if mutation_probability is None else mutation_probability)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
     archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
-    for _ in range(cfg.max_iterations):
+    for t in range(1,cfg.max_iterations+1):
+        refreshed=_dynamic_refresh(base_problem,cfg,t,simulator_inputs,pop)
+        if refreshed is not None:
+            problem,assignments,objectives,archive=refreshed
         vals=scalar_values(objectives,scalar_weights); bh.append(float(np.min(vals))); children=[]
         def tournament():
             a,b=rng.integers(0,cfg.population_size,2); return int(a if vals[a]<=vals[b] else b)
@@ -584,11 +652,15 @@ def run_ga(problem, simulator_inputs, scalar_weights, *, config=None, crossover_
 def run_hs(problem, simulator_inputs, scalar_weights, *, config=None, hmcr=.9, par=.3, bandwidth=.05, seed=0) -> BaselineResult:
     """Harmony Search reconstruction; population acts as harmony memory."""
     cfg=config or CommonBaselineConfig(); cfg.validate(); _validate_weights(scalar_weights)
+    base_problem=problem; problem=_problem_for_iteration(base_problem,cfg,0)
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
     archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
-    for _ in range(cfg.max_iterations):
+    for t in range(1,cfg.max_iterations+1):
+        refreshed=_dynamic_refresh(base_problem,cfg,t,simulator_inputs,pop)
+        if refreshed is not None:
+            problem,assignments,objectives,archive=refreshed
         vals=scalar_values(objectives,scalar_weights); bh.append(float(np.min(vals))); new=np.empty((M,N))
         for idx in np.ndindex(M,N):
             if rng.uniform()<hmcr:
@@ -606,12 +678,16 @@ def run_hs(problem, simulator_inputs, scalar_weights, *, config=None, hmcr=.9, p
 def run_fa(problem, simulator_inputs, scalar_weights, *, config=None, beta0=1.0, gamma=1.0, alpha=0.2, seed=0) -> BaselineResult:
     """Firefly Algorithm reconstruction."""
     cfg=config or CommonBaselineConfig(); cfg.validate(); _validate_weights(scalar_weights)
+    base_problem=problem; problem=_problem_for_iteration(base_problem,cfg,0)
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
     archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
-    for t in range(cfg.max_iterations):
-        vals=scalar_values(objectives,scalar_weights); bh.append(float(np.min(vals))); order=np.argsort(vals); newpop=pop.copy(); alpha_t=alpha*(.97**t)
+    for step in range(1,cfg.max_iterations+1):
+        refreshed=_dynamic_refresh(base_problem,cfg,step,simulator_inputs,pop)
+        if refreshed is not None:
+            problem,assignments,objectives,archive=refreshed
+        t=step-1; vals=scalar_values(objectives,scalar_weights); bh.append(float(np.min(vals))); order=np.argsort(vals); newpop=pop.copy(); alpha_t=alpha*(.97**t)
         for ii in range(cfg.population_size):
             i=order[ii]
             for jj in range(ii):
@@ -627,6 +703,7 @@ def run_fa(problem, simulator_inputs, scalar_weights, *, config=None, beta0=1.0,
 def run_aco(problem, simulator_inputs, scalar_weights, *, config=None, evaporation=.2, reinforcement=1.0, seed=0) -> BaselineResult:
     """Assignment-pheromone ACO reconstruction using the common decoder."""
     cfg=config or CommonBaselineConfig(); cfg.validate(); _validate_weights(scalar_weights)
+    base_problem=problem; problem=_problem_for_iteration(base_problem,cfg,0)
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed); pheromone=np.ones((M,N),float)
     pop=np.empty((cfg.population_size,M,N)); assignments=[]; objectives=[]
     def construct():
@@ -635,7 +712,10 @@ def run_aco(problem, simulator_inputs, scalar_weights, *, config=None, evaporati
     for i in range(cfg.population_size):
         pop[i]=construct(); X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
     archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
-    for _ in range(cfg.max_iterations):
+    for t in range(1,cfg.max_iterations+1):
+        refreshed=_dynamic_refresh(base_problem,cfg,t,simulator_inputs,pop)
+        if refreshed is not None:
+            problem,assignments,objectives,archive=refreshed
         vals=scalar_values(objectives,scalar_weights); g=int(np.argmin(vals)); bh.append(float(vals[g])); pheromone*=(1-evaporation); pheromone+=reinforcement*assignments[g]; pheromone=np.clip(pheromone,1e-6,None)
         assignments=[]; objectives=[]
         for i in range(cfg.population_size):

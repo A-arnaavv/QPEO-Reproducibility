@@ -38,7 +38,7 @@ class ExperimentSuite:
 
 def _run_suite(problem, qpeo_inputs, qpeo_settings, scalar_weights, *, seeds, population_size, max_iterations, names):
     simulator_inputs: SimulatorInputs = qpeo_inputs.simulator_inputs
-    records=[]; bcfg=CommonBaselineConfig(population_size,max_iterations); qcfg=ManuscriptQPEOConfig(population_size=population_size,max_iterations=max_iterations)
+    records=[]; bcfg=CommonBaselineConfig(population_size,max_iterations,qpeo_inputs.carbon_replay); qcfg=ManuscriptQPEOConfig(population_size=population_size,max_iterations=max_iterations)
     runners={
         "QPEO": lambda s: run_qpeo(problem,qpeo_inputs,qpeo_settings,config=qcfg,seed=s),
         "PSO": lambda s: run_pso(problem,simulator_inputs,scalar_weights,config=bcfg,seed=s),

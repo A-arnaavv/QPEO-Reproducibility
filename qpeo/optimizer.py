@@ -7,6 +7,7 @@ import numpy as np
 
 from .archive import ParetoArchive
 from .collapse import feasible_caqc_collapse
+from .carbon import CarbonReplay, with_carbon_intensities
 from .config import ManuscriptQPEOConfig
 from .evaluator import (
     dominates,
@@ -58,6 +59,7 @@ class QPEOInputs:
     performance_affinity: np.ndarray
     thermal_headroom: np.ndarray
     dependency_matrix: np.ndarray
+    carbon_replay: CarbonReplay | None = None
 
     def validate(self, M: int, N: int) -> None:
         self.simulator_inputs.validate(M, N)
@@ -67,6 +69,10 @@ class QPEOInputs:
             raise ValueError("thermal_headroom must have shape (N,).")
         if np.asarray(self.dependency_matrix).shape != (M, M):
             raise ValueError("dependency_matrix must have shape (M,M).")
+        if self.carbon_replay is not None:
+            self.carbon_replay.validate()
+            if self.carbon_replay.resources != N:
+                raise ValueError("carbon replay resource count must match problem resources")
 
 
 @dataclass(frozen=True)
@@ -115,6 +121,26 @@ def _guide_index(objectives: Sequence[ObjectiveVector], weights: Sequence[float]
     return int(np.argmin(values))
 
 
+def _omega_for_problem(problem: ProblemInstance, inputs: QPEOInputs, settings: ReconstructionQPEOSettings) -> np.ndarray:
+    ci = np.asarray([r.carbon_intensity for r in problem.resources], dtype=float)
+    return ecological_compatibility(
+        np.asarray(inputs.performance_affinity, dtype=float),
+        np.asarray(inputs.thermal_headroom, dtype=float),
+        ci,
+        alpha=settings.alpha, beta=settings.beta, gamma=settings.gamma,
+    )
+
+
+def _qpeo_problem_for_iteration(base_problem: ProblemInstance, inputs: QPEOInputs, t: int, max_iterations: int) -> ProblemInstance:
+    replay = inputs.carbon_replay
+    if replay is None:
+        return base_problem
+    expected = tuple(r.name for r in base_problem.resources)
+    if replay.slot_names != expected:
+        raise ValueError("carbon replay slot order must match problem resource names")
+    return with_carbon_intensities(base_problem, replay.at_iteration(t, max_iterations))
+
+
 def run_qpeo(
     problem: ProblemInstance,
     inputs: QPEOInputs,
@@ -131,18 +157,12 @@ def run_qpeo(
     if cfg.population_size < 3:
         raise ValueError("population_size must be at least 3 for local QPSO sampling.")
 
+    base_problem = problem
+    problem = _qpeo_problem_for_iteration(base_problem, inputs, 0, cfg.max_iterations)
     rng = np.random.default_rng(seed)
     population = rng.uniform(0.0, np.pi / 2, size=(cfg.population_size, D))
 
-    ci = np.asarray([r.carbon_intensity for r in problem.resources], dtype=float)
-    omega = ecological_compatibility(
-        np.asarray(inputs.performance_affinity, dtype=float),
-        np.asarray(inputs.thermal_headroom, dtype=float),
-        ci,
-        alpha=settings.alpha,
-        beta=settings.beta,
-        gamma=settings.gamma,
-    )
+    omega = _omega_for_problem(problem, inputs, settings)
 
     assignments: list[np.ndarray] = []
     objectives: list[ObjectiveVector] = []
@@ -177,6 +197,21 @@ def run_qpeo(
             kappa_max=cfg.kappa_max,
             tau_carbon=cfg.tau_carbon,
         )
+        if inputs.carbon_replay is not None:
+            problem = _qpeo_problem_for_iteration(base_problem, inputs, t, cfg.max_iterations)
+            omega = _omega_for_problem(problem, inputs, settings)
+            assignments = []
+            objectives = []
+            archive = ParetoArchive()
+            for n in range(cfg.population_size):
+                X_now, obj_now = _evaluate_theta(
+                    problem, population[n], omega, inputs.simulator_inputs,
+                    kappa=kappa, ci_ref=cfg.ci_ref,
+                )
+                assignments.append(X_now)
+                objectives.append(obj_now)
+                archive.update(population[n], X_now, obj_now)
+            guide = _guide_index(objectives, settings.scalar_weights)
         theta_best = population[guide].copy()
 
         for n in range(cfg.population_size):
