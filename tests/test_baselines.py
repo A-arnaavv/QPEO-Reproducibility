@@ -42,6 +42,7 @@ def toy_problem():
 def _check_result(result, problem):
     assert len(result.final_assignments) == 8
     assert len(result.best_scalar_history) == 4
+    assert result.guide_objective_history.shape == (5,6)
     for X in result.final_assignments:
         assert check_constraints(problem, X).feasible
     assert len(result.archive.entries) >= 1

@@ -21,6 +21,7 @@ class BaselineResult:
     final_objectives: tuple[ObjectiveVector, ...]
     guide_index: int
     best_scalar_history: np.ndarray
+    guide_objective_history: np.ndarray
     archive_size_history: np.ndarray
     seed: int
 

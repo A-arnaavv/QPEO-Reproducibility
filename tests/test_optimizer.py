@@ -44,5 +44,6 @@ def test_qpeo_end_to_end_small_instance():
     assert len(result.final_objectives) == 6
     assert len(result.archive.entries) >= 1
     assert result.entropy_history.shape == (4,)
+    assert result.guide_objective_history.shape == (5,6)
     assert result.archive_size_history.shape == (5,)
     assert np.all(np.isfinite(result.guide_objectives.as_array()))

@@ -51,6 +51,7 @@ def _final_result(
     weights: Sequence[float],
     archive: ParetoArchive,
     best_history: list[float],
+    guide_history: list[np.ndarray],
     archive_history: list[int],
     seed: int,
 ) -> BaselineResult:
@@ -63,6 +64,7 @@ def _final_result(
         final_objectives=tuple(objectives),
         guide_index=g,
         best_scalar_history=np.asarray(best_history, dtype=float),
+        guide_objective_history=np.asarray(guide_history, dtype=float),
         archive_size_history=np.asarray(archive_history, dtype=int),
         seed=seed,
     )
@@ -99,6 +101,7 @@ def run_fpa(
         assignments.append(X); objectives.append(obj)
     archive = _initialize_archive(pop, assignments, objectives)
     best_history: list[float] = []
+    guide_history: list[np.ndarray] = [objectives[guide_index(objectives, scalar_weights)].as_array().copy()]
     archive_history: list[int] = [len(archive.entries)]
 
     for _ in range(cfg.max_iterations):
@@ -128,11 +131,12 @@ def run_fpa(
                 objectives[i] = obj_new
                 archive.update(proposal.reshape(-1), X_new, obj_new)
 
+        guide_history.append(objectives[guide_index(objectives, scalar_weights)].as_array().copy())
         archive_history.append(len(archive.entries))
 
     return _final_result(
         "FPA", pop, assignments, objectives, scalar_weights, archive,
-        best_history, archive_history, seed,
+        best_history, guide_history, archive_history, seed,
     )
 
 
@@ -267,6 +271,7 @@ def run_nsga2(
         assignments.append(X); objectives.append(obj)
     archive = _initialize_archive(pop, assignments, objectives)
     best_history: list[float] = []
+    guide_history: list[np.ndarray] = [objectives[guide_index(objectives, scalar_weights)].as_array().copy()]
     archive_history: list[int] = [len(archive.entries)]
 
     for _ in range(cfg.max_iterations):
@@ -315,11 +320,12 @@ def run_nsga2(
         pop = combined_pop[idx]
         assignments = [combined_assignments[i] for i in idx]
         objectives = [combined_objectives[i] for i in idx]
+        guide_history.append(objectives[guide_index(objectives, scalar_weights)].as_array().copy())
         archive_history.append(len(archive.entries))
 
     return _final_result(
         "NSGA-II", pop, assignments, objectives, scalar_weights, archive,
-        best_history, archive_history, seed,
+        best_history, guide_history, archive_history, seed,
     )
 
 
@@ -358,6 +364,7 @@ def run_qiea(
         assignments.append(X); objectives.append(obj)
     archive = _initialize_archive(theta, assignments, objectives)
     best_history: list[float] = []
+    guide_history: list[np.ndarray] = [objectives[guide_index(objectives, scalar_weights)].as_array().copy()]
     archive_history: list[int] = [len(archive.entries)]
 
     for _ in range(cfg.max_iterations):
@@ -381,11 +388,12 @@ def run_qiea(
                 objectives[i] = obj_new
                 archive.update(proposal.reshape(-1), X_new, obj_new)
 
+        guide_history.append(objectives[guide_index(objectives, scalar_weights)].as_array().copy())
         archive_history.append(len(archive.entries))
 
     return _final_result(
         "QIEA", theta, assignments, objectives, scalar_weights, archive,
-        best_history, archive_history, seed,
+        best_history, guide_history, archive_history, seed,
     )
 
 
@@ -419,7 +427,7 @@ def run_pso(
     for i in range(cfg.population_size):
         X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
     pbest=pop.copy(); pbest_obj=list(objectives)
-    archive=_initialize_archive(pop,assignments,objectives); bh=[]; ah=[len(archive.entries)]
+    archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
     for _ in range(cfg.max_iterations):
         pvals=scalar_values(pbest_obj,scalar_weights); g=int(np.argmin(pvals)); gbest=pbest[g].copy(); bh.append(float(pvals[g]))
         for i in range(cfg.population_size):
@@ -431,8 +439,9 @@ def run_pso(
             if _population_candidate_better(pbest_obj,i,o,scalar_weights):
                 pbest[i]=pop[i].copy(); pbest_obj[i]=o
             archive.update(pop[i].reshape(-1),X,o)
+        gh.append(objectives[guide_index(objectives,scalar_weights)].as_array().copy())
         ah.append(len(archive.entries))
-    return _final_result("PSO",pop,assignments,objectives,scalar_weights,archive,bh,ah,seed)
+    return _final_result("PSO",pop,assignments,objectives,scalar_weights,archive,bh,gh,ah,seed)
 
 
 def run_de(
@@ -451,7 +460,7 @@ def run_de(
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size):
         X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
-    archive=_initialize_archive(pop,assignments,objectives); bh=[]; ah=[len(archive.entries)]
+    archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
     for _ in range(cfg.max_iterations):
         bh.append(float(np.min(scalar_values(objectives,scalar_weights))))
         for i in range(cfg.population_size):
@@ -463,8 +472,9 @@ def run_de(
             X,o=evaluate_scores(problem,simulator_inputs,trial)
             if _population_candidate_better(objectives,i,o,scalar_weights):
                 pop[i]=trial; assignments[i]=X; objectives[i]=o; archive.update(trial.reshape(-1),X,o)
+        gh.append(objectives[guide_index(objectives,scalar_weights)].as_array().copy())
         ah.append(len(archive.entries))
-    return _final_result("DE",pop,assignments,objectives,scalar_weights,archive,bh,ah,seed)
+    return _final_result("DE",pop,assignments,objectives,scalar_weights,archive,bh,gh,ah,seed)
 
 
 def run_gwo(problem, simulator_inputs, scalar_weights, *, config=None, seed=0) -> BaselineResult:
@@ -473,7 +483,7 @@ def run_gwo(problem, simulator_inputs, scalar_weights, *, config=None, seed=0) -
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
-    archive=_initialize_archive(pop,assignments,objectives); bh=[]; ah=[len(archive.entries)]
+    archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
     for t in range(cfg.max_iterations):
         vals=scalar_values(objectives,scalar_weights); order=np.argsort(vals); alpha,beta,delta=[pop[k].copy() for k in order[:3]]; bh.append(float(vals[order[0]]))
         a=2.0*(1.0-t/max(cfg.max_iterations-1,1)); newpop=[]
@@ -485,8 +495,9 @@ def run_gwo(problem, simulator_inputs, scalar_weights, *, config=None, seed=0) -
             newpop.append(np.clip(np.mean(parts,axis=0),0,1))
         for i,p in enumerate(newpop):
             X,o=evaluate_scores(problem,simulator_inputs,p); pop[i]=p; assignments[i]=X; objectives[i]=o; archive.update(p.reshape(-1),X,o)
+        gh.append(objectives[guide_index(objectives,scalar_weights)].as_array().copy())
         ah.append(len(archive.entries))
-    return _final_result("GWO",pop,assignments,objectives,scalar_weights,archive,bh,ah,seed)
+    return _final_result("GWO",pop,assignments,objectives,scalar_weights,archive,bh,gh,ah,seed)
 
 
 def run_woa(problem, simulator_inputs, scalar_weights, *, config=None, b:float=1.0, seed=0) -> BaselineResult:
@@ -495,7 +506,7 @@ def run_woa(problem, simulator_inputs, scalar_weights, *, config=None, b:float=1
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
-    archive=_initialize_archive(pop,assignments,objectives); bh=[]; ah=[len(archive.entries)]
+    archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
     for t in range(cfg.max_iterations):
         vals=scalar_values(objectives,scalar_weights); leader=pop[int(np.argmin(vals))].copy(); bh.append(float(np.min(vals))); a=2-2*t/max(cfg.max_iterations-1,1)
         proposals=[]
@@ -511,8 +522,9 @@ def run_woa(problem, simulator_inputs, scalar_weights, *, config=None, b:float=1
             proposals.append(np.clip(x,0,1))
         for i,pv in enumerate(proposals):
             X,o=evaluate_scores(problem,simulator_inputs,pv); pop[i]=pv; assignments[i]=X; objectives[i]=o; archive.update(pv.reshape(-1),X,o)
+        gh.append(objectives[guide_index(objectives,scalar_weights)].as_array().copy())
         ah.append(len(archive.entries))
-    return _final_result("WOA",pop,assignments,objectives,scalar_weights,archive,bh,ah,seed)
+    return _final_result("WOA",pop,assignments,objectives,scalar_weights,archive,bh,gh,ah,seed)
 
 
 def run_abc(problem, simulator_inputs, scalar_weights, *, config=None, limit:int=20, seed=0) -> BaselineResult:
@@ -521,7 +533,7 @@ def run_abc(problem, simulator_inputs, scalar_weights, *, config=None, limit:int
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); trials=np.zeros(cfg.population_size,int); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
-    archive=_initialize_archive(pop,assignments,objectives); bh=[]; ah=[len(archive.entries)]
+    archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
     for _ in range(cfg.max_iterations):
         bh.append(float(np.min(scalar_values(objectives,scalar_weights))))
         for i in range(cfg.population_size):
@@ -537,8 +549,9 @@ def run_abc(problem, simulator_inputs, scalar_weights, *, config=None, limit:int
             else: trials[i]+=1
         for i in np.where(trials>=limit)[0]:
             pop[i]=rng.uniform(0,1,(M,N)); X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments[i]=X; objectives[i]=o; trials[i]=0; archive.update(pop[i].reshape(-1),X,o)
+        gh.append(objectives[guide_index(objectives,scalar_weights)].as_array().copy())
         ah.append(len(archive.entries))
-    return _final_result("ABC",pop,assignments,objectives,scalar_weights,archive,bh,ah,seed)
+    return _final_result("ABC",pop,assignments,objectives,scalar_weights,archive,bh,gh,ah,seed)
 
 
 def run_ga(problem, simulator_inputs, scalar_weights, *, config=None, crossover_probability=.9, mutation_probability=None, seed=0) -> BaselineResult:
@@ -547,7 +560,7 @@ def run_ga(problem, simulator_inputs, scalar_weights, *, config=None, crossover_
     M,N=len(problem.workloads),len(problem.resources); D=M*N; rng=np.random.default_rng(seed); mp=(1/D if mutation_probability is None else mutation_probability)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
-    archive=_initialize_archive(pop,assignments,objectives); bh=[]; ah=[len(archive.entries)]
+    archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
     for _ in range(cfg.max_iterations):
         vals=scalar_values(objectives,scalar_weights); bh.append(float(np.min(vals))); children=[]
         def tournament():
@@ -564,8 +577,8 @@ def run_ga(problem, simulator_inputs, scalar_weights, *, config=None, crossover_
         for c in children:
             X,o=evaluate_scores(problem,simulator_inputs,c); child_X.append(X); child_objs.append(o); archive.update(c.reshape(-1),X,o)
         combo=np.concatenate([pop,np.stack(children)],axis=0); comboX=assignments+child_X; comboO=objectives+child_objs; cvals=scalar_values(comboO,scalar_weights); keep=np.argsort(cvals)[:cfg.population_size]
-        pop=combo[keep]; assignments=[comboX[i] for i in keep]; objectives=[comboO[i] for i in keep]; ah.append(len(archive.entries))
-    return _final_result("GA",pop,assignments,objectives,scalar_weights,archive,bh,ah,seed)
+        pop=combo[keep]; assignments=[comboX[i] for i in keep]; objectives=[comboO[i] for i in keep]; gh.append(objectives[guide_index(objectives,scalar_weights)].as_array().copy()); ah.append(len(archive.entries))
+    return _final_result("GA",pop,assignments,objectives,scalar_weights,archive,bh,gh,ah,seed)
 
 
 def run_hs(problem, simulator_inputs, scalar_weights, *, config=None, hmcr=.9, par=.3, bandwidth=.05, seed=0) -> BaselineResult:
@@ -574,7 +587,7 @@ def run_hs(problem, simulator_inputs, scalar_weights, *, config=None, hmcr=.9, p
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
-    archive=_initialize_archive(pop,assignments,objectives); bh=[]; ah=[len(archive.entries)]
+    archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
     for _ in range(cfg.max_iterations):
         vals=scalar_values(objectives,scalar_weights); bh.append(float(np.min(vals))); new=np.empty((M,N))
         for idx in np.ndindex(M,N):
@@ -585,8 +598,9 @@ def run_hs(problem, simulator_inputs, scalar_weights, *, config=None, hmcr=.9, p
         new=np.clip(new,0,1); X,o=evaluate_scores(problem,simulator_inputs,new)
         augmented=objectives+[o]; av=scalar_values(augmented,scalar_weights); worst=int(np.argmax(av[:-1]))
         if av[-1]<av[worst]: pop[worst]=new; assignments[worst]=X; objectives[worst]=o; archive.update(new.reshape(-1),X,o)
+        gh.append(objectives[guide_index(objectives,scalar_weights)].as_array().copy())
         ah.append(len(archive.entries))
-    return _final_result("HS",pop,assignments,objectives,scalar_weights,archive,bh,ah,seed)
+    return _final_result("HS",pop,assignments,objectives,scalar_weights,archive,bh,gh,ah,seed)
 
 
 def run_fa(problem, simulator_inputs, scalar_weights, *, config=None, beta0=1.0, gamma=1.0, alpha=0.2, seed=0) -> BaselineResult:
@@ -595,7 +609,7 @@ def run_fa(problem, simulator_inputs, scalar_weights, *, config=None, beta0=1.0,
     M,N=len(problem.workloads),len(problem.resources); rng=np.random.default_rng(seed)
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
-    archive=_initialize_archive(pop,assignments,objectives); bh=[]; ah=[len(archive.entries)]
+    archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
     for t in range(cfg.max_iterations):
         vals=scalar_values(objectives,scalar_weights); bh.append(float(np.min(vals))); order=np.argsort(vals); newpop=pop.copy(); alpha_t=alpha*(.97**t)
         for ii in range(cfg.population_size):
@@ -605,8 +619,9 @@ def run_fa(problem, simulator_inputs, scalar_weights, *, config=None, beta0=1.0,
                 newpop[i]=np.clip(newpop[i]+beta*(pop[j]-newpop[i])+alpha_t*(rng.uniform(size=(M,N))-.5),0,1)
         for i in range(cfg.population_size):
             X,o=evaluate_scores(problem,simulator_inputs,newpop[i]); pop[i]=newpop[i]; assignments[i]=X; objectives[i]=o; archive.update(pop[i].reshape(-1),X,o)
+        gh.append(objectives[guide_index(objectives,scalar_weights)].as_array().copy())
         ah.append(len(archive.entries))
-    return _final_result("FA",pop,assignments,objectives,scalar_weights,archive,bh,ah,seed)
+    return _final_result("FA",pop,assignments,objectives,scalar_weights,archive,bh,gh,ah,seed)
 
 
 def run_aco(problem, simulator_inputs, scalar_weights, *, config=None, evaporation=.2, reinforcement=1.0, seed=0) -> BaselineResult:
@@ -619,11 +634,12 @@ def run_aco(problem, simulator_inputs, scalar_weights, *, config=None, evaporati
         return np.maximum(1e-12,np.log(pheromone+1e-12)+noise)
     for i in range(cfg.population_size):
         pop[i]=construct(); X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
-    archive=_initialize_archive(pop,assignments,objectives); bh=[]; ah=[len(archive.entries)]
+    archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
     for _ in range(cfg.max_iterations):
         vals=scalar_values(objectives,scalar_weights); g=int(np.argmin(vals)); bh.append(float(vals[g])); pheromone*=(1-evaporation); pheromone+=reinforcement*assignments[g]; pheromone=np.clip(pheromone,1e-6,None)
         assignments=[]; objectives=[]
         for i in range(cfg.population_size):
             pop[i]=construct(); X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o); archive.update(pop[i].reshape(-1),X,o)
+        gh.append(objectives[guide_index(objectives,scalar_weights)].as_array().copy())
         ah.append(len(archive.entries))
-    return _final_result("ACO",pop,assignments,objectives,scalar_weights,archive,bh,ah,seed)
+    return _final_result("ACO",pop,assignments,objectives,scalar_weights,archive,bh,gh,ah,seed)

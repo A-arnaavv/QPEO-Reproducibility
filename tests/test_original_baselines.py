@@ -17,5 +17,6 @@ def test_original_baseline_runs(runner):
     p,s=fixture_data(); res=runner(p,s,[1/6]*6,config=CommonBaselineConfig(8,3),seed=4)
     assert len(res.final_assignments)==8
     assert len(res.best_scalar_history)==3
+    assert res.guide_objective_history.shape==(4,6)
     assert all(check_constraints(p,X).feasible for X in res.final_assignments)
     assert len(res.archive.entries)>=1

@@ -77,6 +77,7 @@ class QPEOResult:
     final_objectives: tuple[ObjectiveVector, ...]
     guide_index: int
     entropy_history: np.ndarray
+    guide_objective_history: np.ndarray
     archive_size_history: np.ndarray
     seed: int
 
@@ -164,6 +165,7 @@ def run_qpeo(
     guide = _guide_index(objectives, settings.scalar_weights)
     stagnation = np.zeros(cfg.population_size, dtype=int)
     entropy_history: list[float] = []
+    guide_objective_history: list[np.ndarray] = [objectives[guide].as_array().copy()]
     archive_sizes: list[int] = [len(archive.entries)]
 
     all_indices = np.arange(cfg.population_size)
@@ -228,6 +230,7 @@ def run_qpeo(
                 stagnation[stagnant_mask] = 0
 
         guide = _guide_index(objectives, settings.scalar_weights)
+        guide_objective_history.append(objectives[guide].as_array().copy())
         archive_sizes.append(len(archive.entries))
 
     return QPEOResult(
@@ -237,6 +240,7 @@ def run_qpeo(
         final_objectives=tuple(objectives),
         guide_index=guide,
         entropy_history=np.asarray(entropy_history, dtype=float),
+        guide_objective_history=np.asarray(guide_objective_history, dtype=float),
         archive_size_history=np.asarray(archive_sizes, dtype=int),
         seed=seed,
     )
