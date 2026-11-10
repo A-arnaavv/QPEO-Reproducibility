@@ -229,3 +229,26 @@ NVIDIA VRAM capacity. The reconstructed environment locks 64 GiB host/unified me
 for each slot, matching the manuscript's 64 GB experimental memory baseline and the
 64 GB Orin class. GPU VRAM (24/48/64 GB) remains recorded as hardware metadata but
 is not used as the trace's main-memory constraint.
+
+
+## Alibaba trace protocol TRACE1-v11
+The primary Alibaba scenario uses the official GPU v2023 default pod trace. The
+upstream file is pinned by Git blob SHA
+`bd82505791c723c5b11486ef457fb338529912c0`. Eligibility is fixed before results:
+Succeeded pods only, `num_gpu=1`, `0<gpu_milli<=1000`, positive scheduled runtime,
+CPU request <=16 cores, and host-memory request <=64 GiB. This leaves 178 jobs.
+
+Jobs are sorted by creation time. A single pre-registered anchor from
+`numpy.random.default_rng(20261110).random() = 0.6260788463455607` determines
+contiguous nested windows: 32 jobs (indices 91--122), 64 jobs (71--134, primary),
+and 128 jobs (31--158). The primary block begins at `openb-pod-3131` and ends at
+`openb-pod-5985`.
+
+GPU, CPU and host-memory demands are taken directly from the trace. Bandwidth is set
+to zero because the trace does not expose a bandwidth request and bandwidth is not a
+hard constraint in the current reconstruction. QoS maps to carbon sensitivity as
+LS=critical, Burstable=deferred, BE=flexible. Deadline is the source-observed
+end-to-end interval from creation to deletion; service-time baseline is the observed
+scheduled-to-deletion runtime. Cross-resource service times use the pre-registered
+FP32 relative-speed proxy. Inter-job dependency is set to zero because this trace does
+not expose dependency metadata.
