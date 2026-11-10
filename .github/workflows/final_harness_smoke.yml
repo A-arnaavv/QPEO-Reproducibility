@@ -1,4 +1,4 @@
-name: final-harness-smoke\n# rerun after shard-runner path fix
+name: final-harness-smoke\n# rerun after shard-runner path fix\n# rerun after carbon replay restore
 
 on:
   push:
