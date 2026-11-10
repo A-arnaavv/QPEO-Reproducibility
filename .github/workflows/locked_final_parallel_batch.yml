@@ -1,0 +1,70 @@
+name: locked-final-parallel-batch
+
+# One-time source-triggered experiment batch, not the automatic pytest workflow.
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/locked_final_parallel_batch.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  full-protocol-shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        scenario:
+          - alibaba_gpu_v2023
+          - microsoft_elasticflow_itp_cluster08
+          - helios_earth
+          - alibaba_spot_gpu_2026_a100
+        seed_index: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+    name: ${{ matrix.scenario }} / seed ${{ matrix.seed_index }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install locked dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Execute full locked shard (all 13 algorithms)
+        env:
+          SCENARIO: ${{ matrix.scenario }}
+          SEED_INDEX: ${{ matrix.seed_index }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/qpeo-output"
+          python scripts/run_final_experiment_shard.py \
+            --scenario "$SCENARIO" \
+            --seed-index "$SEED_INDEX" \
+            --output-dir "$RUNNER_TEMP/qpeo-output"
+      - name: Verify output against locked protocol and checksum
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from scripts.audit_final_shards import validate_shard
+          primary=json.loads(Path('configs/reconstruction_protocol.json').read_text())['primary']
+          files=list(Path(__import__('os').environ['RUNNER_TEMP'],'qpeo-output').glob('*__final.json'))
+          if len(files)!=1:
+              raise SystemExit(f'Expected one result shard, got {len(files)}')
+          record=validate_shard(files[0],primary)
+          print(json.dumps(record,indent=2))
+          print('LOCKED_FINAL_SHARD_VALID')
+          PY
+      - name: Back up independently verified shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: qpeo-final-${{ matrix.scenario }}-seed${{ matrix.seed_index }}
+          path: ${{ runner.temp }}/qpeo-output/*__final.json
+          retention-days: 90
+          if-no-files-found: error
+          compression-level: 6
