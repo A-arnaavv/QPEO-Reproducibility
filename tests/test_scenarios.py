@@ -32,3 +32,26 @@ def test_alibaba_scenario_fixture(tmp_path: Path):
     assert b.qpeo_inputs.dependency_matrix.shape==(3,3)
     assert b.workloads[0].deadline>b.workloads[0].arrival_time
     assert b.problem.resources[0].memory_capacity==64.0
+
+
+def test_locked_alibaba_snapshot_matches_protocol():
+    root=Path(__file__).parents[1]
+    env=load_resource_environment(root/'configs'/'resource_environment_v1.json')
+    t0=datetime(2026,1,5,tzinfo=timezone.utc)
+    names=tuple(slot.name for slot in env.slots)
+    replay=CarbonReplay(
+        (t0,t0+timedelta(hours=1)), names,
+        np.array([[100,120,140,160,180,200,220],[110,130,150,170,190,210,230]],float),
+        'fixture',t0,t0+timedelta(hours=1),
+    )
+    b=build_alibaba_gpu_v2023_scenario(
+        root/'data'/'alibaba_gpu_v2023_eligible_succeeded.csv',
+        root/'configs'/'trace_alibaba_gpu_v2023.json',
+        env,replay,size=64,
+    )
+    assert len(b.task_ids)==64
+    assert b.task_ids[0]=='openb-pod-3131'
+    assert b.task_ids[-1]=='openb-pod-5985'
+    assert b.service_time_hours.shape==(64,7)
+    assert all(w.gpu_demand<=1.0 for w in b.workloads)
+    assert all(w.memory_demand<=64.0 for w in b.workloads)
