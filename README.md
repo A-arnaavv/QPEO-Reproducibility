@@ -74,6 +74,13 @@ explicit reconstruction assumptions and are accompanied by sensitivity profiles.
 
 ## v8 carbon replay
 `configs/carbon_replay_v1.json` pre-registers a fixed one-week NESO regional carbon
-replay and deterministic resource-to-region mapping. Carbon thresholds are derived
-from replay tertiles (33rd/67th percentile plus a flexible maximum) rather than tuned
-against algorithm results.
+replay and deterministic resource-to-region mapping. Carbon thresholds use a
+feasibility-guaranteed 1/3/all-resource rule rather than being tuned against algorithm
+results.
+
+
+## v9 dynamic carbon integration
+The carbon replay is now consumed inside the optimization loops. QPEO and all 12
+baselines receive the same carbon vector at each iteration. Current populations are
+re-evaluated after each refresh, and current-state Pareto archives prevent stale carbon
+objectives from contaminating comparisons across time.
