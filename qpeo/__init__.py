@@ -11,7 +11,7 @@ from .operators import (
 from .simulator import PowerModel, SimulationResult, SimulatorInputs, simulate_fixed_assignment
 from .collapse import NoFeasibleAssignment, feasible_caqc_collapse
 from .archive import ParetoArchive, ParetoEntry
-from .optimizer import QPEOInputs, QPEOResult, ReconstructionQPEOSettings, run_qpeo
+from .optimizer import QPEOInputs, QPEOResult, QPEOOperatorSwitches, ReconstructionQPEOSettings, run_qpeo
 
 __all__ = [
     "CarbonClass", "ConstraintReport", "EvaluationState", "ObjectiveVector", "ProblemInstance", "Resource", "Workload",
@@ -21,7 +21,7 @@ __all__ = [
     "kappa_schedule", "local_qpso_update", "mantegna_levy_step", "qbit_components", "validate_angles",
     "von_neumann_entropy", "population_entropy_from_angles", "PowerModel", "SimulationResult", "SimulatorInputs", "simulate_fixed_assignment",
     "NoFeasibleAssignment", "feasible_caqc_collapse", "ParetoArchive", "ParetoEntry", "QPEOInputs", "QPEOResult",
-    "ReconstructionQPEOSettings", "run_qpeo",
+    "QPEOOperatorSwitches", "ReconstructionQPEOSettings", "run_qpeo",
 ]
 
 from .traces import (
