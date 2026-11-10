@@ -35,6 +35,17 @@ def ablation_fixture():
             }
             for name in VARIANTS
         ],
+        "secondary_baselines": [{
+            "variant": "elitist_random_search",
+            "seed": 0,
+            "runtime_seconds": .12,
+            "guide_objectives": [0.0] * 6,
+            "guide_objective_history": [[0.0] * 6] * 3,
+            "entropy_history": [],
+            "simulation_cache_hits": 5,
+            "simulation_cache_misses": 8,
+            "archive_size": 2,
+        }],
     }
 
 
