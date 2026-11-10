@@ -119,7 +119,6 @@
     "Google-v3 GPU-demand reconstruction policy",
     "Azure Functions CPU/GPU/memory/bandwidth reconstruction policy",
     "Kubernetes benchmark source or synthetic generator specification",
-    "carbon-intensity source/window and carbon-class thresholds",
     "performance-affinity construction",
     "thermal-headroom construction",
     "dependency-matrix construction"
@@ -130,5 +129,15 @@
     "primary_cost_profile": "primary_tier_index",
     "primary_power_idle_fraction": 0,
     "service_speed_rule": "FP32 throughput relative to RTX A6000 (38.7 TFLOPS)"
-  }
+  },
+  "carbon_replay": {
+    "config": "configs/carbon_replay_v1.json",
+    "status": "locked-pre-results",
+    "source": "NESO regional carbon-intensity forecast",
+    "window_utc": "2026-01-05 through 2026-01-11",
+    "threshold_rule": "33rd percentile / 67th percentile / maximum + epsilon"
+  },
+  "pending_artifacts_before_final_runs": [
+    "materialize and checksum the locked NESO carbon replay CSV snapshot"
+  ]
 }
