@@ -102,3 +102,14 @@ Primary evaluation uses a deterministic contiguous 64-job window with nested 32/
 scalability windows. Raw arrivals, durations and GPU demand are retained; SLA
 deadlines come from the authors' published experiment trace. Unreported CPU, memory
 and bandwidth demands are explicitly zero/non-binding rather than fabricated.
+
+
+## TRACE3 Helios Earth
+The third production scenario uses SenseTime's public Helios traces. Earth is selected
+by a pre-results rule (largest completed single-GPU pool). After requiring CPU<=16
+for representability in the reconstructed resource pool, 293,903 jobs remain. The
+primary experiment uses a deterministic 64-job window with nested 32/128 windows.
+GPU and CPU demand, arrivals, execution duration, queueing and completion timestamps
+come from the trace. Memory/bandwidth are explicitly zero/non-binding because Helios
+does not publish them; carbon sensitivity is neutral/deferred for all jobs rather than
+being inferred from behavior.
