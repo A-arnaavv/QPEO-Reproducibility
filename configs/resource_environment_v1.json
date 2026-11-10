@@ -2,33 +2,121 @@
   "environment_version": "v1-reconstructed-resource-pool",
   "status": "pre-results",
   "baseline_fp32_tflops": 38.7,
-  "reference_cost_units_per_gpu_hour": 1.0,
+  "reference_cost_units_per_gpu_hour": 1,
   "hardware_classes": {
-    "rtx_4090": {"display_name":"NVIDIA GeForce RTX 4090","gpu_memory_gb":24.0,"max_gpu_power_kw":0.450,"fp32_tflops":82.6,"source":"NVIDIA Ada GPU Architecture / GeForce RTX 4090 specifications"},
-    "rtx_a6000": {"display_name":"NVIDIA RTX A6000","gpu_memory_gb":48.0,"max_gpu_power_kw":0.300,"fp32_tflops":38.7,"source":"NVIDIA RTX A6000 datasheet"},
-    "rtx_a5000": {"display_name":"NVIDIA RTX A5000","gpu_memory_gb":24.0,"max_gpu_power_kw":0.230,"fp32_tflops":27.8,"source":"NVIDIA RTX A5000 datasheet"},
-    "jetson_agx_orin_64gb": {"display_name":"NVIDIA Jetson AGX Orin 64GB","gpu_memory_gb":64.0,"max_gpu_power_kw":0.060,"fp32_tflops":5.3,"source":"NVIDIA Jetson AGX Orin technical brief"}
+    "rtx_4090": {
+      "display_name": "NVIDIA GeForce RTX 4090",
+      "gpu_memory_gb": 24,
+      "max_gpu_power_kw": 0.45,
+      "fp32_tflops": 82.6,
+      "source": "NVIDIA Ada GPU Architecture / GeForce RTX 4090 specifications"
+    },
+    "rtx_a6000": {
+      "display_name": "NVIDIA RTX A6000",
+      "gpu_memory_gb": 48,
+      "max_gpu_power_kw": 0.3,
+      "fp32_tflops": 38.7,
+      "source": "NVIDIA RTX A6000 datasheet"
+    },
+    "rtx_a5000": {
+      "display_name": "NVIDIA RTX A5000",
+      "gpu_memory_gb": 24,
+      "max_gpu_power_kw": 0.23,
+      "fp32_tflops": 27.8,
+      "source": "NVIDIA RTX A5000 datasheet"
+    },
+    "jetson_agx_orin_64gb": {
+      "display_name": "NVIDIA Jetson AGX Orin 64GB",
+      "gpu_memory_gb": 64,
+      "max_gpu_power_kw": 0.06,
+      "fp32_tflops": 5.3,
+      "source": "NVIDIA Jetson AGX Orin technical brief"
+    }
   },
   "resource_slots": [
-    {"name":"cloud-a6000-0","layer":"cloud","hardware_class":"rtx_a6000","gpu_capacity":1.0,"cpu_capacity":16.0,"cost_index_primary":1.00},
-    {"name":"cloud-a5000-0","layer":"cloud","hardware_class":"rtx_a5000","gpu_capacity":1.0,"cpu_capacity":16.0,"cost_index_primary":0.75},
-    {"name":"cloud-4090-0","layer":"cloud","hardware_class":"rtx_4090","gpu_capacity":1.0,"cpu_capacity":16.0,"cost_index_primary":0.90},
-    {"name":"edge-orin-0","layer":"edge","hardware_class":"jetson_agx_orin_64gb","gpu_capacity":1.0,"cpu_capacity":12.0,"cost_index_primary":0.20},
-    {"name":"edge-orin-1","layer":"edge","hardware_class":"jetson_agx_orin_64gb","gpu_capacity":1.0,"cpu_capacity":12.0,"cost_index_primary":0.20},
-    {"name":"serverless-a5000-0","layer":"serverless","hardware_class":"rtx_a5000","gpu_capacity":1.0,"cpu_capacity":8.0,"cost_index_primary":1.15},
-    {"name":"serverless-a5000-1","layer":"serverless","hardware_class":"rtx_a5000","gpu_capacity":1.0,"cpu_capacity":8.0,"cost_index_primary":1.15}
+    {
+      "name": "cloud-a6000-0",
+      "layer": "cloud",
+      "hardware_class": "rtx_a6000",
+      "gpu_capacity": 1,
+      "cpu_capacity": 16,
+      "cost_index_primary": 1,
+      "host_memory_gb": 64
+    },
+    {
+      "name": "cloud-a5000-0",
+      "layer": "cloud",
+      "hardware_class": "rtx_a5000",
+      "gpu_capacity": 1,
+      "cpu_capacity": 16,
+      "cost_index_primary": 0.75,
+      "host_memory_gb": 64
+    },
+    {
+      "name": "cloud-4090-0",
+      "layer": "cloud",
+      "hardware_class": "rtx_4090",
+      "gpu_capacity": 1,
+      "cpu_capacity": 16,
+      "cost_index_primary": 0.9,
+      "host_memory_gb": 64
+    },
+    {
+      "name": "edge-orin-0",
+      "layer": "edge",
+      "hardware_class": "jetson_agx_orin_64gb",
+      "gpu_capacity": 1,
+      "cpu_capacity": 12,
+      "cost_index_primary": 0.2,
+      "host_memory_gb": 64
+    },
+    {
+      "name": "edge-orin-1",
+      "layer": "edge",
+      "hardware_class": "jetson_agx_orin_64gb",
+      "gpu_capacity": 1,
+      "cpu_capacity": 12,
+      "cost_index_primary": 0.2,
+      "host_memory_gb": 64
+    },
+    {
+      "name": "serverless-a5000-0",
+      "layer": "serverless",
+      "hardware_class": "rtx_a5000",
+      "gpu_capacity": 1,
+      "cpu_capacity": 8,
+      "cost_index_primary": 1.15,
+      "host_memory_gb": 64
+    },
+    {
+      "name": "serverless-a5000-1",
+      "layer": "serverless",
+      "hardware_class": "rtx_a5000",
+      "gpu_capacity": 1,
+      "cpu_capacity": 8,
+      "cost_index_primary": 1.15,
+      "host_memory_gb": 64
+    }
   ],
   "power_model": {
-    "primary": {"description":"GPU-side incremental power: P(u)=Pmax*u, excluding host/idle power","idle_fraction_of_max":0.0,"power_exponent":1.0},
-    "sensitivity_idle_fractions":[0.0,0.1,0.2]
+    "primary": {
+      "description": "GPU-side incremental power: P(u)=Pmax*u, excluding host/idle power",
+      "idle_fraction_of_max": 0,
+      "power_exponent": 1
+    },
+    "sensitivity_idle_fractions": [
+      0,
+      0.1,
+      0.2
+    ]
   },
   "cost_profiles": {
-    "primary_tier_index":"Use cost_index_primary from each resource slot; units are dimensionless reconstruction cost units, not USD.",
-    "performance_proportional":"Set each resource hourly cost index equal to its FP32 speed factor relative to RTX A6000.",
-    "power_proportional":"Set each resource hourly cost index equal to max GPU power divided by RTX A6000 max GPU power."
+    "primary_tier_index": "Use cost_index_primary from each resource slot; units are dimensionless reconstruction cost units, not USD.",
+    "performance_proportional": "Set each resource hourly cost index equal to its FP32 speed factor relative to RTX A6000.",
+    "power_proportional": "Set each resource hourly cost index equal to max GPU power divided by RTX A6000 max GPU power."
   },
   "service_speed": {
-    "primary_rule":"speed_factor = hardware_fp32_tflops / 38.7",
-    "caution":"This is a transparent reconstruction proxy, not an application-specific measured speedup. Final paper must state this limitation and include sensitivity analysis."
+    "primary_rule": "speed_factor = hardware_fp32_tflops / 38.7",
+    "caution": "This is a transparent reconstruction proxy, not an application-specific measured speedup. Final paper must state this limitation and include sensitivity analysis."
   }
 }
