@@ -55,6 +55,25 @@ class ReconstructionQPEOSettings:
 
 
 @dataclass(frozen=True)
+class QPEOOperatorSwitches:
+    """Experimental component switches for single-factor ablation tests.
+
+    The standard optimizer runs with every switch on. Explicitly disable only
+    one component family in each ablation. All hard feasibility constraints
+    remain enforced even when the CAQC carbon penalty is removed.
+    """
+    use_caqc_carbon_penalty: bool = True
+    use_ebws: bool = True
+    use_entropy_biodiversity: bool = True
+    use_global_qpso: bool = True
+    use_local_qpso: bool = True
+
+    def validate(self) -> None:
+        if not (self.use_global_qpso or self.use_local_qpso):
+            raise ValueError("At least one QPSO pollination mode must be enabled.")
+
+
+@dataclass(frozen=True)
 class QPEOInputs:
     simulator_inputs: SimulatorInputs
     performance_affinity: np.ndarray
@@ -149,8 +168,11 @@ def run_qpeo(
     *,
     config: ManuscriptQPEOConfig | None = None,
     seed: int = 0,
+    operator_switches: QPEOOperatorSwitches | None = None,
 ) -> QPEOResult:
     cfg = config or ManuscriptQPEOConfig()
+    switches = operator_switches or QPEOOperatorSwitches()
+    switches.validate()
     settings.validate()
     M, N = len(problem.workloads), len(problem.resources)
     D = M * N
@@ -174,6 +196,8 @@ def run_qpeo(
         kappa_max=cfg.kappa_max,
         tau_carbon=cfg.tau_carbon,
     )
+    if not switches.use_caqc_carbon_penalty:
+        kappa0 = 0.0
     for n in range(cfg.population_size):
         X, obj = _evaluate_theta(
             problem, population[n], omega, inputs.simulator_inputs,
@@ -198,6 +222,8 @@ def run_qpeo(
             kappa_max=cfg.kappa_max,
             tau_carbon=cfg.tau_carbon,
         )
+        if not switches.use_caqc_carbon_penalty:
+            kappa = 0.0
         if inputs.carbon_replay is not None:
             problem = _qpeo_problem_for_iteration(base_problem, inputs, t, cfg.max_iterations)
             omega = _omega_for_problem(problem, inputs, settings)
@@ -216,7 +242,7 @@ def run_qpeo(
         theta_best = population[guide].copy()
 
         for n in range(cfg.population_size):
-            if rng.uniform() < cfg.global_switch_probability:
+            if switches.use_global_qpso and (not switches.use_local_qpso or rng.uniform() < cfg.global_switch_probability):
                 proposal = global_qpso_update(
                     population[n], theta_best, rng, lam=cfg.levy_lambda
                 )
@@ -227,13 +253,14 @@ def run_qpeo(
                     population[n], population[m], population[l], rng
                 )
 
-            proposal_2d = ebws_update(
-                proposal.reshape(M, N),
-                np.asarray(inputs.dependency_matrix, dtype=float),
-                delta_dep=settings.dependency_threshold,
-                phi=settings.dependency_strength,
-            )
-            proposal = proposal_2d.reshape(D)
+            if switches.use_ebws:
+                proposal_2d = ebws_update(
+                    proposal.reshape(M, N),
+                    np.asarray(inputs.dependency_matrix, dtype=float),
+                    delta_dep=settings.dependency_threshold,
+                    phi=settings.dependency_strength,
+                )
+                proposal = proposal_2d.reshape(D)
 
             X_new, obj_new = _evaluate_theta(
                 problem, proposal, omega, inputs.simulator_inputs,
@@ -249,20 +276,21 @@ def run_qpeo(
             else:
                 stagnation[n] += 1
 
-        entropy = population_entropy_from_angles(population)
-        entropy_history.append(entropy)
+        if switches.use_entropy_biodiversity:
+            entropy = population_entropy_from_angles(population)
+            entropy_history.append(entropy)
 
-        if entropy < cfg.entropy_threshold:
-            stagnant_mask = stagnation >= cfg.stagnation_iterations
-            if np.any(stagnant_mask):
-                population = biodiversity_restore(
-                    population,
-                    population[_guide_index(objectives, settings.scalar_weights)],
-                    stagnant_mask,
-                    rng,
-                    delta_bio=cfg.biodiversity_amplitude,
-                )
-                stagnation[stagnant_mask] = 0
+            if entropy < cfg.entropy_threshold:
+                stagnant_mask = stagnation >= cfg.stagnation_iterations
+                if np.any(stagnant_mask):
+                    population = biodiversity_restore(
+                        population,
+                        population[_guide_index(objectives, settings.scalar_weights)],
+                        stagnant_mask,
+                        rng,
+                        delta_bio=cfg.biodiversity_amplitude,
+                    )
+                    stagnation[stagnant_mask] = 0
 
         guide = _guide_index(objectives, settings.scalar_weights)
         guide_objective_history.append(objectives[guide].as_array().copy())
