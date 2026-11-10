@@ -54,5 +54,5 @@ __all__ += ["HardwareClassSpec", "ResourceSlotSpec", "ResourceEnvironment", "loa
 from .carbon import CarbonReplay, load_carbon_replay_config, load_neso_regional_replay, with_carbon_intensities
 __all__ += ["CarbonReplay", "load_carbon_replay_config", "load_neso_regional_replay", "with_carbon_intensities"]
 
-from .scenarios import ScenarioBundle, build_alibaba_gpu_v2023_scenario
-__all__ += ["ScenarioBundle", "build_alibaba_gpu_v2023_scenario"]
+from .scenarios import ScenarioBundle, build_alibaba_gpu_v2023_scenario, build_elasticflow_itp_scenario
+__all__ += ["ScenarioBundle", "build_alibaba_gpu_v2023_scenario", "build_elasticflow_itp_scenario"]
