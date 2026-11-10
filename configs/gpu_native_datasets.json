@@ -1,0 +1,14 @@
+{
+  "protocol_version":"v11-gpu-native-datasets",
+  "primary_datasets":[
+    {"key":"alibaba_gpu_v2023","name":"Alibaba GPU Trace v2023","native_gpu_demand":true,"native_cpu_demand":true,"native_memory_demand":true},
+    {"key":"helios","name":"SenseTime Helios","native_gpu_demand":true,"native_cpu_demand":true,"native_memory_demand":false},
+    {"key":"acme","name":"Shanghai AI Lab Acme","native_gpu_demand":true,"native_cpu_demand":true,"native_memory_demand":"Kalos only"},
+    {"key":"philly","name":"Microsoft Philly","native_gpu_demand":true,"native_cpu_demand":false,"native_memory_demand":false}
+  ],
+  "selection":{"primary_scheduling_units":64,"completed_or_passed_jobs_only":true,"positive_runtime_only":true,"chronological_contiguous_after_filtering":true,"random_task_sampling":false},
+  "multi_gpu_policy":{"integer_multi_gpu_jobs":"split into one-GPU shards","fractional_gpu_jobs":"retain fractional GPU demand","same_job_shard_dependency":1.0},
+  "removed_from_primary_revised_evaluation":["Google Cluster Traces v3","Azure Public Dataset v2 / Azure Functions","Kubernetes HPA trace claim"],
+  "removal_reason":"GPU-native production traces reduce reconstruction assumptions and directly expose scheduling GPU demand",
+  "still_unresolved":{"common_memory_policy_for_traces_without_per-job_memory":null,"common_bandwidth_policy":null,"deadline_policy":null}
+}
