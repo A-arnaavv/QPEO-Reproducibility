@@ -114,14 +114,7 @@
     "sobol_samples_power": 18,
     "scramble_seed": 20261110
   },
-  "unresolved_before_final_runs": [
-    "sampling/materialization protocol for non-Alibaba datasets",
-    "Google-v3 GPU-demand reconstruction policy",
-    "Kubernetes benchmark source or synthetic generator specification",
-    "performance-affinity construction",
-    "thermal-headroom construction",
-    "dependency-matrix construction"
-  ],
+  "unresolved_before_final_runs": [],
   "resource_environment": {
     "config": "configs/resource_environment_v1.json",
     "status": "locked-pre-results",
@@ -247,5 +240,17 @@
       "carbon_class_rule": "HP=critical; Spot=flexible",
       "service_time_rule": "source A100 duration scaled by source_fp32/target_resource_fp32"
     }
+  },
+  "final_run_harness": {
+    "status": "ready-pending-ci-smoke",
+    "shard_runner": "scripts/run_final_experiment_shard.py",
+    "aggregator": "scripts/aggregate_final_results.py",
+    "unit_of_checkpoint": "one scenario x one locked seed; contains all 13 algorithms",
+    "expected_final_shards": 120,
+    "expected_final_algorithm_rows": 1560,
+    "primary_size": 64,
+    "population_size": 50,
+    "max_iterations": 500,
+    "seeds": 30
   }
 }
