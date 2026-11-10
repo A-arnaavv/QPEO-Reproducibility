@@ -279,3 +279,22 @@ slack-to-duration ratio is split at precomputed 33rd/67th percentiles
 classes before optimizer results are observed. CPU, memory and bandwidth demand are
 set to zero/non-binding because the raw trace does not publish those fields. Service
 time uses the same documented FP32 relative-speed reconstruction proxy as TRACE1.
+
+
+## Helios Earth trace protocol TRACE3-v13
+TRACE3 uses the official SenseTime Helios release, pinned by Git blob SHA
+`1a48d5e0fb816fe9bbf1ad7086e7dec90923e5c6` and archive SHA-256
+`3d22a5f6c0ae669e2fcbfe4200fa9c48664507bc397c677bad8f085222c032ac`.
+Among Earth, Saturn, Uranus and Venus, Earth is selected by the pre-results rule
+"largest completed single-GPU pool." Eligibility is fixed as COMPLETED, gpu_num=1,
+duration>0, valid submit/start/end times, and 0<=cpu_num<=16, leaving 293,903 jobs.
+
+The same anchor fraction used by TRACE1/TRACE2 selects nested 32/64/128 contiguous
+submission-time windows. The primary 64-job window is full-pool indices
+183966--184029, from job 1738622 through 1739705. GPU demand and CPU demand are
+source fields. Memory and bandwidth are zero/non-binding because Helios does not
+publish those requests. Deadline is the observed source end time relative to the
+selected block's first submission; base runtime is source start-to-end duration.
+Because Helios does not expose a workload priority/SLA class, all jobs are assigned
+the neutral deferred carbon-sensitivity class rather than inferring urgency from queue
+or runtime behavior.
