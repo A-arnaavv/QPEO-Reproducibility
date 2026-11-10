@@ -31,3 +31,24 @@ def test_scalarization():
 
 def test_dominance():
     assert dominates(np.ones(6),np.ones(6)*2)
+
+
+def test_best_effort_infinite_deadline_excluded_from_sla():
+    problem=ProblemInstance(
+        [
+            Workload("sla",1,.2,1,1,0,1,CarbonClass.CRITICAL),
+            Workload("best_effort",1,.2,1,1,0,float("inf"),CarbonClass.FLEXIBLE),
+        ],
+        [Resource("g",1,8,100,1)],
+        {CarbonClass.CRITICAL:200,CarbonClass.DEFERRED:300,CarbonClass.FLEXIBLE:500},
+        1,
+    )
+    X=np.array([[1],[1]])
+    state=EvaluationState(
+        completion_times=np.array([2.0,10.0]),
+        energy_kwh_by_resource=np.array([1.0]),
+        occupied_gpu_hours=np.array([2.0]),
+        allocated_gpu_fraction_hours=np.array([2.0]),
+    )
+    o=evaluate_objectives(problem,X,state)
+    assert o.f5_sla_violation_percent==pytest.approx(100.0)
