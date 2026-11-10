@@ -1,0 +1,10 @@
+{
+  "protocol_version":"v12-trace-materialization",
+  "deadline_policy":{"rule":"deadline = trace arrival + observed queue time + observed runtime","interpretation":"the original production completion time is used as the SLA proxy","status":"trace-derived; no tuned slack multiplier"},
+  "missing_resource_policy":{
+    "memory":{"rule":"pooled median observed GiB per GPU scheduling unit from Alibaba GPU v2023 and Acme Kalos","apply_to":["Helios","Microsoft Philly","Acme Seren rows lacking memory"],"value_gib_per_gpu":null,"freeze_timing":"compute once after raw trace filtering/sharding and before any optimizer run"},
+    "cpu":{"rule":"pooled median observed CPU demand per GPU scheduling unit from Alibaba GPU v2023, Helios, and Acme","apply_to":["Microsoft Philly and any row lacking CPU"],"value_cpu_per_gpu":null,"note":"CPU is retained for workload characterization but is not currently a formal hard constraint"},
+    "bandwidth":{"rule":"0.0 when unavailable","reason":"none of the four primary job traces provides a consistent per-job bandwidth request; bandwidth is not a current formal hard constraint"}
+  },
+  "carbon_class":{"primary_default":"deferred","note":"carbon-sensitivity class has no native equivalent across all four traces; sensitivity by class will be separate rather than inferred from hidden heuristics"}
+}
