@@ -25,14 +25,48 @@ The project distinguishes between:
 - explicit-reference Sobol hypervolume estimator
 - 13-algorithm experiment suite
 
-## Important status
-**No paper result values have been fabricated or back-filled.** The current code is a
-reconstructed experimental framework. Real paper results must be regenerated after:
-- public trace windows are fixed,
-- missing trace fields are handled by explicit documented policies,
-- service-time / power / price models are fixed,
-- undocumented QPEO parameters are selected and reported,
-- all algorithms are run for the final 30-seed protocol.
+## Current primary-study status (10 November 2026)
+**Primary computation and validation are complete.** All 120 locked
+scenario-seed shards are committed in `results/raw/`: four trace-based simulated
+scenarios, 30 predeclared seeds each, 13 algorithms, 1,560 algorithm runs.
+`results/final_shard_audit.json` reports 120/120 valid files, zero missing and
+zero invalid shards. Validated aggregation and statistical outputs are in
+`results/final_summary_long.csv` and `results/analysis/`, including 288 paired
+QPEO-versus-baseline Wilcoxon comparisons.
+
+**Interpretation is mixed, not universal superiority.** Under the 288-test
+Bonferroni correction at familywise alpha 0.01, 76 significant comparisons
+favor QPEO, 108 favor baselines and 104 are not significant. QPEO is strongest
+on *energy-weighted carbon intensity*, which is not total emissions. Energy,
+makespan, utilization, SLA and modeled cost must be discussed independently.
+The original implementation was lost: these are **independently reconstructed,
+trace-based simulation results**, not replicas of the original measurements.
+The equal population/iteration budget is not an equal evaluation-call budget.
+Performance, power and cost rely on the disclosed proxies in
+`docs/LOCKED_PRIMARY_METHODS.md`.
+
+**Source provenance:** `results/reproducibility/seed00_parity.json` documents
+canonical rechecks of three earlier seed-0 cohorts. Alibaba and Microsoft
+were equivalent; the original Alibaba Spot seed-0 cohort differed materially
+for QPEO, PSO and NSGA-II, so the original was archived and the canonical
+result retained. Helios seed 0 was computed under an earlier source commit
+with the same experiment logic; later changes included documentation and
+dependency pinning. That dependency/source provenance must remain disclosed.
+
+**Remaining before submission:**
+- [ ] Complete and report carefully scoped ablations, sensitivity and robustness
+      checks, or justify transparently any studies not performed; do not
+      silently change the locked primary protocol
+- [ ] Integrate objective-level results, paired effects, rankings and limitations
+      into the manuscript; avoid unsupported hypervolume or stationary
+      convergence claims
+- [ ] Check dataset/baseline citations, bibliography, figures, equations and
+      computational-budget fairness disclosures
+- [ ] Perform final provenance review and supervisor/co-author manuscript review
+
+The historical development notes below describe earlier stages. The locked
+configuration files, validated raw shards and analysis reports are authoritative
+for the final primary study.
 
 ## Tests
 ```bash
