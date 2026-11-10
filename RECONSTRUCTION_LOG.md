@@ -308,3 +308,18 @@ TRACE4, which are opportunistic and do not carry the same strict SLO semantics a
 jobs. Existing TRACE1--TRACE3 workloads all retain finite deadlines, so their SLA
 metric is unchanged. The revised manuscript must define an SLA-constrained subset
 (W_{SLA}) in the formal f5 expression.
+
+
+## Trace-derived deadline and missing-resource policy
+The revised GPU-native traces expose submission/queue/run timing, so the SLA deadline
+proxy is defined as the original observed production completion time:
+deadline_i = arrival_i + observed_queue_i + observed_runtime_i. No tuned slack
+multiplier is used.
+
+For traces lacking per-job memory, the final imputation value will be the pooled median
+native GiB-per-GPU scheduling unit measured from Alibaba GPU v2023 and Acme Kalos
+after the same validity filtering and sharding. Missing CPU demand is similarly imputed
+from the pooled native CPU-per-GPU median across Alibaba, Helios, and Acme. These
+values are computed and frozen before optimizer execution. Bandwidth is set to zero
+when unavailable because the primary traces lack a consistent bandwidth-request field
+and bandwidth is not a current formal hard constraint.
