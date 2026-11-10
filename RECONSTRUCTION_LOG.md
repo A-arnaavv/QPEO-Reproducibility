@@ -176,3 +176,19 @@ The primary infrastructure-cost coefficients are dimensionless reconstruction co
 indices rather than USD prices. Two additional cost profiles (performance-proportional
 and power-proportional) are predeclared for sensitivity analysis. This avoids implying
 that the lost implementation's provider-specific hourly prices were recovered.
+
+
+## Carbon-replay protocol CARB1
+The rebuilt experiment uses NESO's openly available GB regional carbon-intensity
+forecast as a reproducible carbon replay rather than requiring private WattTime or
+Electricity Maps credentials. The locked primary window is the first complete ISO
+week of 2026 (2026-01-05 through 2026-01-11 UTC). Seven resource slots are mapped
+in fixed slot order to predeclared GB regions; this mapping is locked before the
+optimizer results are generated.
+
+Carbon-sensitivity thresholds are derived from the replay, not tuned to QPEO:
+critical = pooled 33rd percentile, deferred = pooled 67th percentile, and flexible =
+maximum replay intensity plus numerical epsilon. Optimizer iteration t is mapped
+linearly to the replay row index round(t*(K-1)/T). Missing regional values use a
+predeclared within-region forward-fill/back-fill rule and a region with no observations
+causes the experiment to fail.
