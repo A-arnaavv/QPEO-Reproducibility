@@ -5,7 +5,7 @@ import numpy as np
 
 from qpeo.carbon import CarbonReplay
 from qpeo.resource_environment import load_resource_environment
-from qpeo.scenarios import build_alibaba_gpu_v2023_scenario, build_elasticflow_itp_scenario
+from qpeo.scenarios import build_alibaba_gpu_v2023_scenario, build_elasticflow_itp_scenario, build_helios_earth_scenario
 
 def test_alibaba_scenario_fixture(tmp_path: Path):
     snap=tmp_path/'ali.csv'
@@ -81,3 +81,28 @@ def test_locked_elasticflow_snapshot_matches_protocol():
     assert all(w.memory_demand==0.0 for w in b.workloads)
     classes={w.carbon_class for w in b.workloads}
     assert classes
+
+
+def test_locked_helios_snapshot_matches_protocol():
+    root=Path(__file__).parents[1]
+    env=load_resource_environment(root/'configs'/'resource_environment_v1.json')
+    t0=datetime(2026,1,5,tzinfo=timezone.utc)
+    names=tuple(slot.name for slot in env.slots)
+    replay=CarbonReplay(
+        (t0,t0+timedelta(hours=1)),names,
+        np.array([[100,120,140,160,180,200,220],[110,130,150,170,190,210,230]],float),
+        'fixture',t0,t0+timedelta(hours=1),
+    )
+    b=build_helios_earth_scenario(
+        root/'data'/'helios_earth_selected_128.csv',
+        root/'configs'/'trace_helios_earth.json',
+        env,replay,size=64,
+    )
+    assert len(b.task_ids)==64
+    assert b.task_ids[0]=='1738622'
+    assert b.task_ids[-1]=='1739705'
+    assert b.service_time_hours.shape==(64,7)
+    assert all(w.gpu_demand==1.0 for w in b.workloads)
+    assert all(w.memory_demand==0.0 for w in b.workloads)
+    assert all(w.cpu_demand<=16.0 for w in b.workloads)
+    assert all(w.carbon_class==CarbonClass.DEFERRED for w in b.workloads)
