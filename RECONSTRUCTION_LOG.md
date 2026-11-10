@@ -55,12 +55,14 @@ The operator functions require alpha/beta/gamma, delta_dep, phi, and scalar weig
 to be supplied explicitly. A later experiment configuration may choose neutral values,
 but they will be labelled as reconstruction settings and reported in the revised paper.
 
-## Reconstruction convention S1: static-capacity execution semantics
-The manuscript's formal GPU and memory constraints sum the demand of all workloads
-assigned to each resource. The v3 simulator therefore treats a formally feasible
-assignment as safe for overlap: a workload starts at its trace arrival time and runs for
-an explicitly supplied workload-resource service time. The simulator does not add a
-hidden queueing discipline.
+## Reconstruction convention S1-v10: temporal-capacity execution semantics
+The manuscript's original Eqs. (2)-(3) summed all assigned workload demand without
+a time index, which makes realistic multi-arrival traces infeasible even when jobs can
+execute sequentially. The rebuilt simulator therefore treats X as a resource-assignment
+decision and enforces GPU and memory capacity over simulated time. Workloads are
+processed in arrival order and start at the earliest time their assigned resource has
+sufficient GPU and memory capacity for the full service interval. The revised paper
+must update Eqs. (2)-(3) to their time-indexed form and explain this correction.
 
 ## Reconstruction convention S2: explicit service-time matrix
 The lost code's execution-time model is unavailable. The simulator therefore requires
@@ -209,3 +211,12 @@ is therefore rebuilt from the current population after each carbon refresh and t
 updated within the iteration. PSO personal-best positions are also re-evaluated under
 the current carbon state before selecting its global guide. This is a reconstruction
 choice for nonstationary optimization and is applied symmetrically across methods.
+
+## Time-aware utilisation objective U1-v10
+The original f1 formula used aggregate assigned GPU demand divided by capacity and
+can exceed 100% when sequential jobs are assigned to the same resource. For trace
+replay, f1 is reconstructed as negative time-average GPU utilisation over the global
+scheduling horizon: for each resource, integrate allocated GPU fraction-hours and
+divide by H = max_i C_i - min_i a_i, then average across resources. This value is in
+[-1,0] and remains meaningful for queued/sequential workloads. The manuscript must
+replace the old f1 expression before final submission.
