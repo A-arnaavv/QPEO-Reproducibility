@@ -101,3 +101,29 @@ def test_individual_resource_overflow_rejected():
     )
     with pytest.raises(ValueError,match="GPU-capacity"):
         simulate_fixed_assignment(too_large,X,inputs)
+
+
+def test_roundoff_at_back_to_back_full_gpu_boundary_is_not_real_overlap():
+    # Regression: Helios single-GPU intervals differed by 5.55e-17 hours
+    # at the queue transition. That must not be reported as utilisation 2.
+    from qpeo.simulator import _integrate_resource_energy
+    intervals = [
+        (0.3030555555555556, 0.46361111111111114, 1.0),
+        (0.4636111111111111, 0.6102777777777777, 1.0),
+    ]
+    energy, active, allocated = _integrate_resource_energy(
+        intervals, gpu_capacity=1.0, idle_power_kw=0.0,
+        dynamic_power_kw=0.3, power_exponent=1.0,
+    )
+    assert energy == pytest.approx(0.3 * allocated, abs=1e-12)
+    assert active == pytest.approx(allocated, abs=1e-12)
+
+
+def test_energy_integrator_rejects_actual_overlapping_full_gpu_jobs():
+    from qpeo.simulator import _integrate_resource_energy
+    with pytest.raises(ValueError, match="Instantaneous GPU utilisation"):
+        _integrate_resource_energy(
+            [(0.0, 1.0, 1.0), (0.5, 1.5, 1.0)],
+            gpu_capacity=1.0, idle_power_kw=0.0,
+            dynamic_power_kw=0.3, power_exponent=1.0,
+        )
