@@ -1,6 +1,6 @@
 from pathlib import Path
 import pytest
-from qpeo.resources import ResourcePoolSpec, build_resource_pool, load_resource_config
+from qpeo.resources import ResourcePoolSpec, build_resource_pool, load_resource_config, fp32_normalized_speed_factors
 
 def test_vendor_templates_and_primary_counts():
     path = Path(__file__).parents[1] / "configs" / "resource_pool.json"
@@ -35,3 +35,14 @@ def test_pool_builds_with_explicit_reconstruction_values():
     assert power.idle_power_kw[a5000_i] + power.dynamic_power_kw[a5000_i] == pytest.approx(.230)
     orin_i = keys.index("agx_orin_64")
     assert power.idle_power_kw[orin_i] + power.dynamic_power_kw[orin_i] == pytest.approx(.060)
+
+
+def test_fp32_speed_factors_match_published_values():
+    path = Path(__file__).parents[1] / "configs" / "resource_pool.json"
+    templates, raw = load_resource_config(path)
+    factors = fp32_normalized_speed_factors(templates)
+    assert factors["a5000"] == pytest.approx(1.0)
+    assert factors["a6000"] == pytest.approx(38.7/27.8)
+    assert factors["rtx4090"] == pytest.approx(82.6/27.8)
+    assert factors["agx_orin_64"] == pytest.approx(5.3/27.8)
+    assert raw["primary_topology_reconstruction"]["idle_fraction_of_max"] == pytest.approx(.20)
