@@ -1,0 +1,33 @@
+name: materialize-alibaba-spot-trace
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/materialize_alibaba_spot_trace.py"
+      - ".github/workflows/materialize_alibaba_spot.yml"
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download and verify pinned trace
+        run: |
+          mkdir -p audit/spot
+          curl -fL https://raw.githubusercontent.com/alibaba/clusterdata/3858992ca41bf92082e6d6522ddf0bebd14e838b/cluster-trace-v2026-spot-gpu/job_info_df.csv -o audit/spot/job_info_df.csv
+          echo "113ccee4c28f5c3bbaaca974cd164b9280b7d4c39e53b745443b28eea05e03dd  audit/spot/job_info_df.csv" | sha256sum -c -
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Materialize TRACE4
+        run: python scripts/materialize_alibaba_spot_trace.py
+      - name: Commit snapshot and config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/alibaba_spot_a100_selected_128.csv configs/trace_alibaba_spot_a100.json
+          git commit -m "Lock Alibaba spot A100 TRACE4 snapshot"
+          git push
