@@ -1,0 +1,90 @@
+{
+  "dataset_id": "alibaba_spot_gpu_2026_a100",
+  "status": "locked-pre-results",
+  "source": {
+    "repository": "alibaba/clusterdata",
+    "commit": "3858992ca41bf92082e6d6522ddf0bebd14e838b",
+    "path": "cluster-trace-v2026-spot-gpu/job_info_df.csv",
+    "blob_sha": "f2a0dcbc26b5a1a047e49a7efa886e86ec9cde32",
+    "sha256": "113ccee4c28f5c3bbaaca974cd164b9280b7d4c39e53b745443b28eea05e03dd"
+  },
+  "selection": {
+    "source_gpu_model": "A100-SXM4-80GB",
+    "source_fp32_tflops": 19.5,
+    "eligible_rule": "gpu_model==A100-SXM4-80GB, worker_num==1, 0<gpu_request<=1, 0<=cpu_request<=16, duration>0, job_type in {HP,Spot}",
+    "eligible_count": 83416,
+    "anchor_fraction": 0.6260788463455607,
+    "primary_size": 64,
+    "scalability_sizes": [
+      32,
+      64,
+      128
+    ],
+    "windows": {
+      "32": {
+        "start_index": 52204,
+        "end_index": 52235,
+        "first_task": "441987",
+        "last_task": "442020",
+        "submission_span_hours": 3.4758333333333336,
+        "job_type_counts": {
+          "Spot": 9,
+          "HP": 23
+        },
+        "snapshot_start_index": 60,
+        "snapshot_end_index": 91
+      },
+      "64": {
+        "start_index": 52184,
+        "end_index": 52247,
+        "first_task": "441953",
+        "last_task": "298924",
+        "submission_span_hours": 5.585,
+        "job_type_counts": {
+          "Spot": 20,
+          "HP": 44
+        },
+        "snapshot_start_index": 40,
+        "snapshot_end_index": 103
+      },
+      "128": {
+        "start_index": 52144,
+        "end_index": 52271,
+        "first_task": "441891",
+        "last_task": "261569",
+        "submission_span_hours": 10.004722222222222,
+        "job_type_counts": {
+          "Spot": 59,
+          "HP": 69
+        },
+        "snapshot_start_index": 0,
+        "snapshot_end_index": 127
+      }
+    },
+    "snapshot": "data/alibaba_spot_a100_selected_128.csv"
+  },
+  "workload_mapping": {
+    "gpu_demand": "gpu_request",
+    "cpu_demand": "cpu_request",
+    "memory_demand": 0.0,
+    "bandwidth_demand": 0.0,
+    "arrival_time": "submit_time relative to first job in selected window",
+    "observed_runtime": "duration / 3600",
+    "deadline_HP": "arrival + source duration",
+    "deadline_Spot": "infinity (best-effort; excluded from SLA denominator)",
+    "carbon_class": {
+      "HP": "critical",
+      "Spot": "flexible"
+    }
+  },
+  "service_time": {
+    "primary_rule": "observed A100 duration * (19.5 FP32 TFLOPS / target_resource_fp32_tflops)",
+    "source_fp32_tflops": 19.5,
+    "source_spec": "NVIDIA A100 80GB SXM"
+  },
+  "qpeo_features": {
+    "performance_affinity": "row-wise normalized inverse service time",
+    "thermal_headroom": "1 - resource_max_power / max_resource_max_power",
+    "dependency_matrix": "all zeros because the trace does not expose job dependency metadata"
+  }
+}
