@@ -123,8 +123,8 @@ best-effort, flexible, and excluded from the SLA denominator. Service times are
 scaled from the source A100 FP32 throughput to each reconstructed target resource.
 
 
-## v8 carbon-intensity benchmark
-The primary carbon benchmark is frozen before final results: Electricity Maps v4,
-hourly lifecycle and flow-traced carbon intensity, 2025-03-03 through 2025-03-10 UTC.
-Representative zones are PJM (cloud), CAISO (serverless/high-performance), and
-Northern India (edge). Final runs use saved CSV snapshots with SHA-256 checksums.
+## Carbon data used in the final experiment
+The locked primary carbon replay is the **NESO regional forecast** defined in
+`configs/carbon_replay_v1.json`, with its immutable snapshot under `data/carbon/`.
+The earlier Electricity Maps v8 prototype is superseded and is not part of the
+final experimental protocol.
