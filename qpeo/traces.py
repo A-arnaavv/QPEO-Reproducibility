@@ -130,7 +130,7 @@ def load_alibaba_gpu_v2023_pods_csv(
                 memory_demand=float(row["memory_mib"] or 0) / 1024.0,
                 bandwidth_demand=None,
                 qos=row.get("qos") or None,
-                metadata={"source": "alibaba-gpu-v2023"},
+                metadata={"source": "alibaba-gpu-v2023", "queue_hours": str((scheduled - creation) / 3600.0)},
             ))
             if limit is not None and len(out) >= limit:
                 break
@@ -232,7 +232,7 @@ def load_helios_cluster_csv(path: str | Path, *, completed_only: bool = True, li
                 task_id=str(row["job_id"]), arrival_hours=0.0, runtime_hours=runtime_s/3600.0,
                 cpu_demand=float(row["cpu_num"] or 0), gpu_demand=gpu,
                 memory_demand=None, bandwidth_demand=None, qos=row.get("vc") or None,
-                metadata={"source":"helios","vc":row.get("vc",""),"user":row.get("user","")},
+                metadata={"source":"helios","vc":row.get("vc",""),"user":row.get("user",""),"queue_hours":str(float(row.get("queue") or 0)/3600.0)},
             )))
             if limit_jobs is not None and len(rows) >= limit_jobs:
                 break
@@ -264,7 +264,7 @@ def load_acme_job_csv(path: str | Path, *, completed_only: bool = True, limit_jo
                 task_id=str(row["job_id"]), arrival_hours=0.0, runtime_hours=runtime_s/3600.0,
                 cpu_demand=float(row["cpu_num"] or 0), gpu_demand=gpu, memory_demand=mem,
                 bandwidth_demand=None, qos=row.get("type") or None,
-                metadata={"source":"acme","type":row.get("type",""),"user":row.get("user",""),"node_num":row.get("node_num","")},
+                metadata={"source":"acme","type":row.get("type",""),"user":row.get("user",""),"node_num":row.get("node_num",""),"queue_hours":str(float(row.get("queue") or 0)/3600.0)},
             )))
             if limit_jobs is not None and len(rows)>=limit_jobs:
                 break
@@ -309,7 +309,7 @@ def load_philly_job_log(path: str | Path, *, passed_only: bool = True, limit_job
             runtime_hours=(end-start).total_seconds()/3600.0,
             cpu_demand=None, gpu_demand=float(gpu_count), memory_demand=None,
             bandwidth_demand=None, qos=obj.get("vc") or None,
-            metadata={"source":"philly","vc":obj.get("vc",""),"user":obj.get("user","")},
+            metadata={"source":"philly","vc":obj.get("vc",""),"user":obj.get("user",""),"queue_hours":str(max(0.0,(start-submit).total_seconds()/3600.0))},
         )))
         if limit_jobs is not None and len(rows)>=limit_jobs: break
     rows.sort(key=lambda x:x[0])
@@ -354,3 +354,68 @@ def shard_multi_gpu_tasks(tasks: Sequence[RawTraceTask], *, max_scheduling_units
             if i!=j and groups[i]==groups[j]:
                 dep[i,j]=1.0
     return units,dep
+
+
+@dataclass(frozen=True)
+class NativeTraceMaterializationPolicy:
+    memory_imputation_gib_per_gpu: float
+    cpu_imputation_per_gpu: float
+    default_bandwidth_demand: float
+    default_carbon_class: CarbonClass
+
+    def validate(self) -> None:
+        if self.memory_imputation_gib_per_gpu <= 0:
+            raise ValueError("memory_imputation_gib_per_gpu must be > 0.")
+        if self.cpu_imputation_per_gpu <= 0:
+            raise ValueError("cpu_imputation_per_gpu must be > 0.")
+        if self.default_bandwidth_demand < 0:
+            raise ValueError("default_bandwidth_demand must be >= 0.")
+
+
+def observed_queue_hours(task: RawTraceTask) -> float:
+    raw = task.metadata.get("queue_hours") if task.metadata else None
+    if raw in (None, ""):
+        raise ValueError(f"Task {task.task_id} lacks observed queue-time metadata.")
+    q = float(raw)
+    if q < 0:
+        raise ValueError("Observed queue time cannot be negative.")
+    return q
+
+
+def trace_derived_deadline(task: RawTraceTask) -> float:
+    return float(task.arrival_hours + observed_queue_hours(task) + task.runtime_hours)
+
+
+def pooled_native_per_gpu_median(tasks: Sequence[RawTraceTask], *, field: str) -> float:
+    if field not in {"memory_demand","cpu_demand"}:
+        raise ValueError("field must be memory_demand or cpu_demand")
+    vals=[]
+    for task in tasks:
+        demand=getattr(task,field)
+        gpu=task.gpu_demand
+        if demand is None or gpu is None or gpu <= 0:
+            continue
+        value=float(demand)/float(gpu)
+        if np.isfinite(value) and value>0:
+            vals.append(value)
+    if not vals:
+        raise ValueError(f"No observed positive values available for {field}.")
+    return float(np.median(np.asarray(vals,dtype=float)))
+
+
+def materialize_gpu_native_workloads(tasks: Sequence[RawTraceTask], policy: NativeTraceMaterializationPolicy) -> list[Workload]:
+    policy.validate()
+    out=[]
+    for task in tasks:
+        gpu=float(task.gpu_demand) if task.gpu_demand is not None else None
+        if gpu is None or gpu <= 0 or gpu > 1+1e-12:
+            raise ValueError("materialize_gpu_native_workloads expects already-sharded tasks with 0<gpu<=1.")
+        cpu=float(task.cpu_demand) if task.cpu_demand is not None else policy.cpu_imputation_per_gpu*gpu
+        mem=float(task.memory_demand) if task.memory_demand is not None else policy.memory_imputation_gib_per_gpu*gpu
+        bw=float(task.bandwidth_demand) if task.bandwidth_demand is not None else policy.default_bandwidth_demand
+        out.append(Workload(
+            name=task.task_id, cpu_demand=cpu, gpu_demand=gpu, memory_demand=mem,
+            bandwidth_demand=bw, arrival_time=float(task.arrival_hours),
+            deadline=trace_derived_deadline(task), carbon_class=policy.default_carbon_class,
+        ))
+    return out
