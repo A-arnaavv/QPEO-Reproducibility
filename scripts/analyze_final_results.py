@@ -215,6 +215,7 @@ def main() -> None:
         "bonferroni_raw_alpha_across_scenarios":FAMILYWISE_ALPHA/GLOBAL_COMPARISONS,
         "sampling_protocol":"paired 30-seed comparisons; minimization objectives",
         "evaluation_budget_caveat":"Population and iterations matched, simulator calls can differ. See descriptives.",
+        "convergence_status":"Raw objective histories are saved for all algorithms, but f3 and carbon-dependent feasibility are evaluated against a changing NESO carbon replay. A conventional stationary time-to-90-percent convergence claim is not reported from these histories without a fixed-carbon control or a predeclared time-dependent comparator.",
         "hypervolume_status":"Not computed: shard files contain archive sizes but not full per-run Pareto-front objective sets. Hypervolume cannot be reconstructed legitimately from archive sizes.",
         "validated_source_sha256":checksums,
     }
