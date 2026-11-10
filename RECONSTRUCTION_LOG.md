@@ -298,3 +298,13 @@ selected block's first submission; base runtime is source start-to-end duration.
 Because Helios does not expose a workload priority/SLA class, all jobs are assigned
 the neutral deferred carbon-sensitivity class rather than inferring urgency from queue
 or runtime behavior.
+
+
+## SLA-domain correction SLA1-v14
+The SLA objective now evaluates only workloads with finite deadlines. Workloads with
+`deadline=inf` are explicitly best-effort and are excluded from both the numerator and
+denominator of the SLA-violation percentage. This is required for Spot workloads in
+TRACE4, which are opportunistic and do not carry the same strict SLO semantics as HP
+jobs. Existing TRACE1--TRACE3 workloads all retain finite deadlines, so their SLA
+metric is unchanged. The revised manuscript must define an SLA-constrained subset
+(W_{SLA}) in the formal f5 expression.
