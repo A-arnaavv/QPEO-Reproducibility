@@ -26,6 +26,7 @@ from .operators import (
     kappa_schedule,
     local_qpso_update,
     von_neumann_entropy,
+    population_entropy_from_angles,
 )
 from .simulator import SimulatorInputs, simulate_fixed_assignment
 
@@ -248,8 +249,7 @@ def run_qpeo(
             else:
                 stagnation[n] += 1
 
-        rhos = [candidate_density_proxy(population[n]) for n in range(cfg.population_size)]
-        entropy = von_neumann_entropy(rhos)
+        entropy = population_entropy_from_angles(population)
         entropy_history.append(entropy)
 
         if entropy < cfg.entropy_threshold:
