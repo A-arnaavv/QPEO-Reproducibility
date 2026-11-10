@@ -113,3 +113,11 @@ GPU and CPU demand, arrivals, execution duration, queueing and completion timest
 come from the trace. Memory/bandwidth are explicitly zero/non-binding because Helios
 does not publish them; carbon sensitivity is neutral/deferred for all jobs rather than
 being inferred from behavior.
+
+
+## TRACE4 Alibaba Spot A100
+The fourth locked scenario uses Alibaba's 2026 Spot-GPU trace restricted to
+A100-SXM4-80GB single-worker jobs. The pre-results 64-job primary window contains
+both HP and Spot jobs. HP jobs are SLA-constrained and critical; Spot jobs are
+best-effort, flexible, and excluded from the SLA denominator. Service times are
+scaled from the source A100 FP32 throughput to each reconstructed target resource.
