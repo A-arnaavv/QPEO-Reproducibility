@@ -1,4 +1,5 @@
 name: tests
+# Validates the reconstructed repository on every main-branch update.
 
 on:
   push:
