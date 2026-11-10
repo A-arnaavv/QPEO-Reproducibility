@@ -42,3 +42,6 @@ from .statistics import (
     friedman_test, nemenyi_posthoc, iterations_to_fraction_of_final,
     approximate_hypervolume,
 )
+
+from .protocol import PrimaryProtocol, load_protocol, pooled_normalization_transform, normalize_with_transform
+__all__ += ["PrimaryProtocol", "load_protocol", "pooled_normalization_transform", "normalize_with_transform"]
