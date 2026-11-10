@@ -49,11 +49,14 @@ class CarbonReplay:
         return np.asarray(self.intensities[idx],dtype=float).copy()
 
     def thresholds(self)->dict[CarbonClass,float]:
-        vals=np.asarray(self.intensities,dtype=float).reshape(-1)
+        x=np.asarray(self.intensities,dtype=float)
+        ordered=np.sort(x,axis=1)
+        eps=1e-9
+        deferred_index=min(2,ordered.shape[1]-1)
         return {
-            CarbonClass.CRITICAL: float(np.quantile(vals,.33)),
-            CarbonClass.DEFERRED: float(np.quantile(vals,.67)),
-            CarbonClass.FLEXIBLE: float(np.max(vals)+1e-9),
+            CarbonClass.CRITICAL: float(np.max(ordered[:,0])+eps),
+            CarbonClass.DEFERRED: float(np.max(ordered[:,deferred_index])+eps),
+            CarbonClass.FLEXIBLE: float(np.max(ordered[:,-1])+eps),
         }
 
 
