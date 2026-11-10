@@ -33,13 +33,27 @@ remains dynamic for every variant.
 
 ## Additional comparisons
 
-The existing full-suite **FPA** rows can serve as a distinct classical FPA
-reference without rerunning it, provided their source commit and input
-protocol match. A **pure random-search** baseline would need the same
-non-QPEO feasible decoder and dynamic-carbon evaluation semantics; merely
-randomizing QPEO angles while leaving CAQC active would *not* be an honest
-unqualified random-search baseline. This baseline has **not yet been
-implemented or executed**.
+The existing full-suite **FPA** rows serve as a classical FPA
+reference, using the exact same locked seed, scenario and carbon replay.
+A separate **elitist random-search** comparator is now implemented in
+`qpeo/random_search.py`. It independently samples uniform random-key
+scheduling scores, uses the shared non-QPEO feasible decoder, and retains
+the best candidates under the changing NESO carbon replay. Its proposal
+distribution does not invoke QPEO angles, CAQC, EBWS or pollination.
+
+This is deliberately called *elitist random search*, not pure independent
+Monte Carlo search, because it preserves incumbents across iterations. It
+refreshes the previous population under each new carbon state and evaluates
+a fresh random population of the same size. Thus it evaluates roughly 2P
+candidates per iteration and its simulator-call counts will be reported.
+Neither FPA nor random search is a QPEO operator ablation.
+
+With this comparator the report has eight total rows (full, five single-factor
+ablations, FPA, random search), seven comparisons against full QPEO across
+six objectives, and 42 paired tests per scenario (168 across four scenarios).
+Use per-scenario Bonferroni-42 and global Bonferroni-168 alongside raw values.
+Random search is **implemented and smoke-tested but has not yet been run
+at full scale**.
 
 ## Statistical comparisons
 
