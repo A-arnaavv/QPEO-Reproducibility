@@ -220,3 +220,12 @@ scheduling horizon: for each resource, integrate allocated GPU fraction-hours an
 divide by H = max_i C_i - min_i a_i, then average across resources. This value is in
 [-1,0] and remains meaningful for queued/sequential workloads. The manuscript must
 replace the old f1 expression before final submission.
+
+
+## Memory-semantics correction MEM1-v11
+Alibaba's `memory_mib` field is host/main-memory request. The scheduler's formal
+`MEMcap` constraint therefore uses per-slot host/unified memory capacity rather than
+NVIDIA VRAM capacity. The reconstructed environment locks 64 GiB host/unified memory
+for each slot, matching the manuscript's 64 GB experimental memory baseline and the
+64 GB Orin class. GPU VRAM (24/48/64 GB) remains recorded as hardware metadata but
+is not used as the trace's main-memory constraint.
