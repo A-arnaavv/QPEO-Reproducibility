@@ -1,0 +1,51 @@
+name: final-harness-smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/final_harness_smoke.yml"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run one tiny real-scenario full-suite shard
+        run: |
+          python scripts/run_final_experiment_shard.py \
+            --scenario alibaba_gpu_v2023 \
+            --seed-index 0 \
+            --size 32 \
+            --population-size 6 \
+            --max-iterations 2 \
+            --output-dir /tmp/qpeo-smoke \
+            --force
+      - name: Validate smoke output
+        run: |
+          python - <<'PY'
+          import json, math
+          from pathlib import Path
+          files=list(Path('/tmp/qpeo-smoke').glob('*.json'))
+          assert len(files)==1, files
+          d=json.loads(files[0].read_text())
+          assert d['scenario']=='alibaba_gpu_v2023'
+          assert d['size']==32
+          assert d['population_size']==6
+          assert d['max_iterations']==2
+          assert d['final_protocol'] is False
+          assert len(d['algorithms'])==13
+          names={a['algorithm'] for a in d['algorithms']}
+          expected={"QPEO","PSO","DE","GWO","WOA","ABC","GA","HS","FA","ACO","FPA","QIEA","NSGA-II"}
+          assert names==expected, names
+          for a in d['algorithms']:
+              assert len(a['guide_objectives'])==6
+              assert all(math.isfinite(float(x)) for x in a['guide_objectives'])
+              assert len(a['guide_objective_history'])==3
+          print('FINAL HARNESS SMOKE PASS')
+          PY
