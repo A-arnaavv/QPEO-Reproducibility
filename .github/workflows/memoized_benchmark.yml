@@ -1,0 +1,41 @@
+name: memoized-harness-benchmark
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/memoized_benchmark.yml"
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run memoized real-scenario benchmark
+        run: |
+          python scripts/run_final_experiment_shard.py \
+            --scenario alibaba_gpu_v2023 \
+            --seed-index 0 \
+            --size 32 \
+            --population-size 10 \
+            --max-iterations 20 \
+            --output-dir /tmp/qpeo-memo-bench \
+            --force
+      - name: Print runtime and cache statistics
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=next(Path('/tmp/qpeo-memo-bench').glob('*.json'))
+          d=json.loads(p.read_text())
+          for a in d['algorithms']:
+              h=a.get('simulation_cache_hits',0)
+              m=a.get('simulation_cache_misses',0)
+              rate=h/(h+m) if h+m else 0
+              print(f"{a['algorithm']}: runtime={a['runtime_seconds']:.4f}s hits={h} misses={m} hit_rate={rate:.3f}")
+          PY
