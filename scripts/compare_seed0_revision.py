@@ -9,8 +9,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 import numpy as np
 
@@ -130,7 +134,6 @@ def main() -> None:
     p.add_argument("--output", default="results/reproducibility/seed00_parity.json")
     args=p.parse_args()
     root=Path(__file__).resolve().parents[1]
-    protocol=load_protocol(root/"configs/reconstruction_protocol.json")[0]
     raw=json.loads((root/"configs/reconstruction_protocol.json").read_text())["primary"]
     report=compare_files(root/args.original_dir,Path(args.canonical_dir),raw)
     dest=root/args.output
