@@ -63,3 +63,6 @@ __all__ += ["HardwareTemplate","ResourcePoolSpec","load_resource_config","build_
 
 from .traces import load_helios_cluster_csv, load_acme_job_csv, load_philly_job_log, shard_multi_gpu_tasks
 __all__ += ["load_helios_cluster_csv","load_acme_job_csv","load_philly_job_log","shard_multi_gpu_tasks"]
+
+from .traces import NativeTraceMaterializationPolicy, observed_queue_hours, trace_derived_deadline, pooled_native_per_gpu_median, materialize_gpu_native_workloads
+__all__ += ["NativeTraceMaterializationPolicy","observed_queue_hours","trace_derived_deadline","pooled_native_per_gpu_median","materialize_gpu_native_workloads"]
