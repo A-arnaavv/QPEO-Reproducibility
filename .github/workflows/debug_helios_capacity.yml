@@ -1,4 +1,5 @@
 name: debug-helios-capacity
+# scan all initial QPEO candidates
 
 on:
   push:
@@ -16,7 +17,7 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
-      - name: Reproduce first Helios QPEO assignment and inspect schedule
+      - name: Find exact failing initial Helios candidate
         run: |
           python - <<'PY'
           import sys
@@ -29,44 +30,50 @@ jobs:
           from qpeo.config import ManuscriptQPEOConfig
           from qpeo.operators import assignment_probabilities, kappa_schedule
           from qpeo.collapse import feasible_caqc_collapse
-          from qpeo.simulator import _earliest_feasible_start, _integrate_resource_energy
+          from qpeo.simulator import simulate_fixed_assignment, clear_simulation_cache, _earliest_feasible_start
 
           bundle,env,replay=build_scenario('helios_earth',64)
           primary,_=load_protocol(ROOT/'configs'/'reconstruction_protocol.json')
-          settings=ReconstructionQPEOSettings(
-              scalar_weights=primary.scalar_guide_weights,alpha=primary.alpha,beta=primary.beta,gamma=primary.gamma,
-              dependency_threshold=primary.dependency_threshold,dependency_strength=primary.dependency_strength)
+          settings=ReconstructionQPEOSettings(primary.scalar_guide_weights,primary.alpha,primary.beta,primary.gamma,primary.dependency_threshold,primary.dependency_strength)
           cfg=ManuscriptQPEOConfig(population_size=50,max_iterations=500)
           problem=_qpeo_problem_for_iteration(bundle.problem,bundle.qpeo_inputs,0,cfg.max_iterations)
           omega=_omega_for_problem(problem,bundle.qpeo_inputs,settings)
           rng=np.random.default_rng(104729)
-          theta=rng.uniform(0,np.pi/2,size=(50,64*len(problem.resources)))[0]
-          probs=assignment_probabilities(theta,omega)
-          X=feasible_caqc_collapse(problem,probs,kappa=kappa_schedule(0),ci_ref=cfg.ci_ref)
-          assigned=np.argmax(X,axis=1)
-          service=np.asarray(bundle.qpeo_inputs.simulator_inputs.service_time_hours,float)
-          arrivals=np.asarray([w.arrival_time for w in problem.workloads],float)
-          scheduled=[[] for _ in problem.resources]
-          starts=np.zeros(64); ends=np.zeros(64)
-          for i in sorted(range(64),key=lambda k:(float(arrivals[k]),k)):
-              j=int(assigned[i]); w=problem.workloads[i]; r=problem.resources[j]; dur=float(service[i,j])
-              st=_earliest_feasible_start(scheduled[j],float(arrivals[i]),dur,float(w.gpu_demand),float(w.memory_demand),float(r.gpu_capacity),float(r.memory_capacity))
-              en=st+dur; starts[i]=st; ends[i]=en; scheduled[j].append((st,en,float(w.gpu_demand),float(w.memory_demand)))
-          for j,r in enumerate(problem.resources):
-              ints=scheduled[j]
-              events=[]
-              for a,b,g,m in ints:
-                  events.append((a,1,g)); events.append((b,0,-g))
-              events.sort(key=lambda e:(e[0],e[1]))
-              d=0.; mx=0.; prev=None
-              for t,kind,delta in events:
-                  if prev is not None and t>prev: mx=max(mx,d)
-                  d+=delta; prev=t
-              print('RESOURCE',j,r.name,'jobs',len(ints),'max_gpu',mx)
-              if mx>float(r.gpu_capacity)+1e-9:
-                  for x in sorted(ints): print('  ',x)
-                  try:
-                      print(_integrate_resource_energy([(a,b,g) for a,b,g,m in ints],gpu_capacity=float(r.gpu_capacity),idle_power_kw=0,dynamic_power_kw=.1,power_exponent=1))
-                  except Exception as exc:
-                      print('ENERGY_ERROR',repr(exc))
+          pop=rng.uniform(0,np.pi/2,size=(50,64*len(problem.resources)))
+          kappa=kappa_schedule(0)
+          for n,theta in enumerate(pop):
+              probs=assignment_probabilities(theta,omega)
+              X=feasible_caqc_collapse(problem,probs,kappa=kappa,ci_ref=cfg.ci_ref)
+              clear_simulation_cache()
+              try:
+                  simulate_fixed_assignment(problem,X,bundle.qpeo_inputs.simulator_inputs)
+                  print('CANDIDATE_OK',n)
+                  continue
+              except Exception as exc:
+                  print('CANDIDATE_FAIL',n,repr(exc))
+              assigned=np.argmax(X,axis=1)
+              service=np.asarray(bundle.qpeo_inputs.simulator_inputs.service_time_hours,float)
+              arrivals=np.asarray([w.arrival_time for w in problem.workloads],float)
+              scheduled=[[] for _ in problem.resources]
+              for i in sorted(range(64),key=lambda k:(float(arrivals[k]),k)):
+                  j=int(assigned[i]); w=problem.workloads[i]; r=problem.resources[j]; dur=float(service[i,j])
+                  st=_earliest_feasible_start(scheduled[j],float(arrivals[i]),dur,float(w.gpu_demand),float(w.memory_demand),float(r.gpu_capacity),float(r.memory_capacity))
+                  scheduled[j].append((st,st+dur,float(w.gpu_demand),float(w.memory_demand),i))
+              for j,r in enumerate(problem.resources):
+                  ints=scheduled[j]; events=[]
+                  for a,b,g,m,i in ints:
+                      events.append((a,1,g,i)); events.append((b,0,-g,i))
+                  events.sort(key=lambda e:(e[0],e[1]))
+                  d=0.; mx=0.; prev=None; active=set()
+                  for t,kind,delta,i in events:
+                      if prev is not None and t>prev and d>mx: mx=d
+                      if kind==0: active.discard(i)
+                      else: active.add(i)
+                      d+=delta; prev=t
+                      if d>float(r.gpu_capacity)+1e-9:
+                          print('  SWEEP_OVERLOAD',j,r.name,'time',repr(t),'load',repr(d),'active',sorted(active))
+                  print('  RESOURCE',j,r.name,'jobs',len(ints),'max_gpu',mx)
+                  if mx>float(r.gpu_capacity)+1e-9:
+                      for x in sorted(ints): print('    INTERVAL',x)
+              break
           PY
