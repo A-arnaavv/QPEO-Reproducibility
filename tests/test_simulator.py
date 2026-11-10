@@ -65,12 +65,12 @@ def test_billing_mode_changes_cost_basis():
     assert obj_active.f6_normalized_cost == pytest.approx(3.0/3.0)
     assert obj_alloc.f6_normalized_cost == pytest.approx(1.8/3.0)
 
-def test_infeasible_static_capacity_rejected():
+def test_temporal_capacity_queues_aggregate_overflow():
     problem = make_problem()
-    bad_problem = ProblemInstance(
+    queued_problem = ProblemInstance(
         workloads=[
-            Workload("w1",1,.7,4,1,0,5,CarbonClass.FLEXIBLE),
-            Workload("w2",1,.6,6,1,1,5,CarbonClass.DEFERRED),
+            Workload("w1",1,.7,4,1,0.0,5,CarbonClass.FLEXIBLE),
+            Workload("w2",1,.6,6,1,0.25,5,CarbonClass.DEFERRED),
         ],
         resources=problem.resources,
         carbon_thresholds=problem.carbon_thresholds,
@@ -82,5 +82,22 @@ def test_infeasible_static_capacity_rejected():
         power_model=PowerModel(np.array([.1,.1]),np.array([.2,.2])),
         billing_mode="active_resource_hours",
     )
-    with pytest.raises(ValueError, match="GPU-capacity"):
-        simulate_fixed_assignment(bad_problem,X,inputs)
+    result=simulate_fixed_assignment(queued_problem,X,inputs)
+    assert result.start_times[0]==pytest.approx(0.0)
+    assert result.start_times[1]==pytest.approx(1.0)
+    assert result.completion_times[1]==pytest.approx(2.0)
+
+def test_individual_resource_overflow_rejected():
+    problem=make_problem()
+    too_large=ProblemInstance(
+        [Workload("big",1,1.2,4,1,0,5,CarbonClass.FLEXIBLE)],
+        problem.resources,problem.carbon_thresholds,problem.reference_cost,
+    )
+    X=np.array([[1,0]])
+    inputs=SimulatorInputs(
+        service_time_hours=np.ones((1,2)),
+        power_model=PowerModel(np.array([.1,.1]),np.array([.2,.2])),
+        billing_mode="active_resource_hours",
+    )
+    with pytest.raises(ValueError,match="GPU-capacity"):
+        simulate_fixed_assignment(too_large,X,inputs)
