@@ -157,7 +157,7 @@
       "scenario": "alibaba_gpu_v2023",
       "seed": 104729,
       "seed_index": 0,
-      "sha256": "9a51bcbea9610ade03062953f3a2c7e70b9faa6082656a5d80edd52f3d9091d2",
+      "sha256": "9b4a651307235e3c5a8c64bb9c2083d0bccdae587f692c9c0eb8856659ebb4e9",
       "simulation_evaluation_calls_by_algorithm": {
         "ABC": 75494,
         "ACO": 50050,
@@ -173,7 +173,7 @@
         "QPEO": 50050,
         "WOA": 50050
       },
-      "source_git_sha": "c4bd0e16b3ec2d150de00d4885315cd361820c90"
+      "source_git_sha": "7d1efcf0980620e66db01b4d7c32d80081038471"
     },
     {
       "algorithm_count": 13,
@@ -877,7 +877,7 @@
       "scenario": "alibaba_spot_gpu_2026_a100",
       "seed": 104729,
       "seed_index": 0,
-      "sha256": "c8ec705844fc7d50424e4ff368e5714e6204d199cb90ba09ec6cc5eb7df5c42f",
+      "sha256": "ae0ba5b7d07b8275153459459de13fe6d90bb4d804733969173c8ab95faffdd1",
       "simulation_evaluation_calls_by_algorithm": {
         "ABC": 75572,
         "ACO": 50050,
@@ -893,7 +893,7 @@
         "QPEO": 50050,
         "WOA": 50050
       },
-      "source_git_sha": "981145939269876c9de0ca12d97cf28b9ca4a511"
+      "source_git_sha": "7d1efcf0980620e66db01b4d7c32d80081038471"
     },
     {
       "algorithm_count": 13,
@@ -925,7 +925,7 @@
       "scenario": "microsoft_elasticflow_itp_cluster08",
       "seed": 104729,
       "seed_index": 0,
-      "sha256": "e5ae43ca8eb0af7f1d79ce2c6b638b8eb376fc62dada674a1e41173f4c636b0e",
+      "sha256": "8a08790ddf15f2c3688d72e4793f3a6890aa562900931bcbb0a068cc44e5a6e9",
       "simulation_evaluation_calls_by_algorithm": {
         "ABC": 75790,
         "ACO": 50050,
@@ -941,7 +941,7 @@
         "QPEO": 50050,
         "WOA": 50050
       },
-      "source_git_sha": "981145939269876c9de0ca12d97cf28b9ca4a511"
+      "source_git_sha": "7d1efcf0980620e66db01b4d7c32d80081038471"
     }
   ],
   "valid_shards": 33,

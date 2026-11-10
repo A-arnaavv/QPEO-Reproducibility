@@ -8,7 +8,7 @@
   "seed": 104729,
   "population_size": 50,
   "max_iterations": 500,
-  "git_sha": "981145939269876c9de0ca12d97cf28b9ca4a511",
+  "git_sha": "7d1efcf0980620e66db01b4d7c32d80081038471",
   "resource_environment_version": "v1-reconstructed-resource-pool",
   "carbon_source": "National Energy System Operator (NESO) Regional Carbon Intensity Forecast",
   "carbon_rows": 336,
@@ -16,7 +16,7 @@
     {
       "algorithm": "QPEO",
       "seed": 104729,
-      "runtime_seconds": 172.046027208,
+      "runtime_seconds": 183.667571367,
       "guide_objectives": [
         -0.37101512329897895,
         9.338616927797247,
@@ -5047,7 +5047,7 @@
     {
       "algorithm": "PSO",
       "seed": 104729,
-      "runtime_seconds": 91.60533715900002,
+      "runtime_seconds": 102.45537625899999,
       "guide_objectives": [
         -0.4015630162346363,
         9.084909993686264,
@@ -10078,7 +10078,7 @@
     {
       "algorithm": "DE",
       "seed": 104729,
-      "runtime_seconds": 114.82342195999996,
+      "runtime_seconds": 123.65034974600002,
       "guide_objectives": [
         -0.6575758502821506,
         8.468309864665716,
@@ -15109,7 +15109,7 @@
     {
       "algorithm": "GWO",
       "seed": 104729,
-      "runtime_seconds": 88.38524899800001,
+      "runtime_seconds": 97.25271315599997,
       "guide_objectives": [
         -0.4503957070878218,
         8.545657539506337,
@@ -20140,7 +20140,7 @@
     {
       "algorithm": "WOA",
       "seed": 104729,
-      "runtime_seconds": 52.446044873999995,
+      "runtime_seconds": 58.30693825900005,
       "guide_objectives": [
         -0.28478383929669104,
         8.708244830334282,
@@ -25171,7 +25171,7 @@
     {
       "algorithm": "ABC",
       "seed": 104729,
-      "runtime_seconds": 165.6168107279999,
+      "runtime_seconds": 179.614524083,
       "guide_objectives": [
         -0.5288932279798753,
         8.815171523117293,
@@ -30202,7 +30202,7 @@
     {
       "algorithm": "GA",
       "seed": 104729,
-      "runtime_seconds": 57.166412326,
+      "runtime_seconds": 63.28734573300005,
       "guide_objectives": [
         -0.5519108102529245,
         8.098596354146983,
@@ -35233,7 +35233,7 @@
     {
       "algorithm": "HS",
       "seed": 104729,
-      "runtime_seconds": 35.962265539999976,
+      "runtime_seconds": 40.10668478499997,
       "guide_objectives": [
         -0.6684689977965034,
         9.198124320889582,
@@ -40264,7 +40264,7 @@
     {
       "algorithm": "FA",
       "seed": 104729,
-      "runtime_seconds": 76.42677656599994,
+      "runtime_seconds": 85.99181364799995,
       "guide_objectives": [
         -0.3956808950839877,
         9.973906907848935,
@@ -45295,7 +45295,7 @@
     {
       "algorithm": "ACO",
       "seed": 104729,
-      "runtime_seconds": 77.60563882999998,
+      "runtime_seconds": 90.56717866399993,
       "guide_objectives": [
         -0.3286397708035355,
         8.742602098031021,
@@ -50326,7 +50326,7 @@
     {
       "algorithm": "FPA",
       "seed": 104729,
-      "runtime_seconds": 49.934342789000084,
+      "runtime_seconds": 55.92175122500021,
       "guide_objectives": [
         -0.3482742118680638,
         9.031125974052864,
@@ -55357,7 +55357,7 @@
     {
       "algorithm": "QIEA",
       "seed": 104729,
-      "runtime_seconds": 123.09576161500001,
+      "runtime_seconds": 133.02569765599992,
       "guide_objectives": [
         -0.5743574751614762,
         7.871730533816356,
@@ -60388,7 +60388,7 @@
     {
       "algorithm": "NSGA-II",
       "seed": 104729,
-      "runtime_seconds": 132.754973222,
+      "runtime_seconds": 150.03863537100005,
       "guide_objectives": [
         -0.6642162977591243,
         8.785410629814937,
@@ -65416,5 +65416,6 @@
         0.21568228662186478
       ]
     }
-  ]
+  ],
+  "seed0_parity_recheck": true
 }

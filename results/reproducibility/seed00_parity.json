@@ -1,0 +1,392 @@
+{
+  "comparison_rule": "same objectives and all 501 histories within predeclared rtol and atol; exact simulator-call and archive-size counts",
+  "all_three_equivalent": false,
+  "count": 3,
+  "comparisons": [
+    {
+      "scenario": "alibaba_gpu_v2023",
+      "seed": 104729,
+      "original_git_sha": "c4bd0e16b3ec2d150de00d4885315cd361820c90",
+      "canonical_git_sha": "7d1efcf0980620e66db01b4d7c32d80081038471",
+      "rtol": 1e-09,
+      "atol": 1e-10,
+      "equivalent": true,
+      "algorithms": [
+        {
+          "algorithm": "QPEO",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "PSO",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "DE",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "GWO",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "WOA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "ABC",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "GA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "HS",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "FA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "ACO",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "FPA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "QIEA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "NSGA-II",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        }
+      ]
+    },
+    {
+      "scenario": "microsoft_elasticflow_itp_cluster08",
+      "seed": 104729,
+      "original_git_sha": "981145939269876c9de0ca12d97cf28b9ca4a511",
+      "canonical_git_sha": "7d1efcf0980620e66db01b4d7c32d80081038471",
+      "rtol": 1e-09,
+      "atol": 1e-10,
+      "equivalent": true,
+      "algorithms": [
+        {
+          "algorithm": "QPEO",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "PSO",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "DE",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "GWO",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "WOA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "ABC",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "GA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "HS",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "FA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "ACO",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "FPA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "QIEA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "NSGA-II",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 0.0,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        }
+      ]
+    },
+    {
+      "scenario": "alibaba_spot_gpu_2026_a100",
+      "seed": 104729,
+      "original_git_sha": "981145939269876c9de0ca12d97cf28b9ca4a511",
+      "canonical_git_sha": "7d1efcf0980620e66db01b4d7c32d80081038471",
+      "rtol": 1e-09,
+      "atol": 1e-10,
+      "equivalent": false,
+      "algorithms": [
+        {
+          "algorithm": "QPEO",
+          "final_objectives_equivalent": false,
+          "all_501_history_rows_equivalent": false,
+          "max_final_objective_abs_delta": 18.24496339362618,
+          "max_history_abs_delta": 92.37154088050313,
+          "simulator_calls_equal": true,
+          "archive_size_equal": false
+        },
+        {
+          "algorithm": "PSO",
+          "final_objectives_equivalent": false,
+          "all_501_history_rows_equivalent": false,
+          "max_final_objective_abs_delta": 2.2727272727272805,
+          "max_history_abs_delta": 12.628432254196639,
+          "simulator_calls_equal": true,
+          "archive_size_equal": false
+        },
+        {
+          "algorithm": "DE",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 1.4210854715202004e-14,
+          "max_history_abs_delta": 5.684341886080802e-14,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "GWO",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 5.684341886080802e-14,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "WOA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 2.842170943040401e-14,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "ABC",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 1.4210854715202004e-14,
+          "max_history_abs_delta": 2.842170943040401e-14,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "GA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 5.684341886080802e-14,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "HS",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 5.684341886080802e-14,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "FA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 5.684341886080802e-14,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "ACO",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 5.684341886080802e-14,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "FPA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 0.0,
+          "max_history_abs_delta": 2.842170943040401e-14,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "QIEA",
+          "final_objectives_equivalent": true,
+          "all_501_history_rows_equivalent": true,
+          "max_final_objective_abs_delta": 1.4210854715202004e-14,
+          "max_history_abs_delta": 2.842170943040401e-14,
+          "simulator_calls_equal": true,
+          "archive_size_equal": true
+        },
+        {
+          "algorithm": "NSGA-II",
+          "final_objectives_equivalent": false,
+          "all_501_history_rows_equivalent": false,
+          "max_final_objective_abs_delta": 8.055340519776806,
+          "max_history_abs_delta": 75.91202830188682,
+          "simulator_calls_equal": true,
+          "archive_size_equal": false
+        }
+      ]
+    }
+  ],
+  "policy": "When not equivalent, preserve both versions and use canonical rerun for that seed in final analysis. No values are interpolated or guessed."
+}
