@@ -135,9 +135,16 @@
     "status": "locked-pre-results",
     "source": "NESO regional carbon-intensity forecast",
     "window_utc": "2026-01-05 through 2026-01-11",
-    "threshold_rule": "33rd percentile / 67th percentile / maximum + epsilon"
+    "threshold_rule": "worst-case row minimum / worst-case row 3rd-lowest / replay maximum + epsilon (guarantees >=1/3/all carbon-feasible resources per replay step)"
   },
   "pending_artifacts_before_final_runs": [
     "materialize and checksum the locked NESO carbon replay CSV snapshot"
-  ]
+  ],
+  "dynamic_carbon": {
+    "status": "implemented-and-tested",
+    "applies_to": "QPEO and all 12 baselines",
+    "refresh": "one replay vector per optimizer iteration, shared across algorithms",
+    "current_state_archive": "rebuild after carbon refresh to avoid stale f3/feasibility values",
+    "qpeo_specific_refresh": "recompute ecological compatibility Omega because Eq. (10) includes carbon intensity"
+  }
 }
