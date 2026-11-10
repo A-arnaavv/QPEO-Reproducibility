@@ -1,0 +1,241 @@
+name: materialize-fixed-trace-scenarios
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/materialize_trace_scenarios.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download frozen public trace sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/qpeo-traces
+          curl -L --fail --retry 3 -o /tmp/qpeo-traces/alibaba.csv \
+            https://raw.githubusercontent.com/alibaba/clusterdata/master/cluster-trace-gpu-v2023/csv/openb_pod_list_default.csv
+          curl -L --fail --retry 3 -o /tmp/qpeo-traces/acme_kalos.csv \
+            https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/job_trace/trace_kalos.csv
+          curl -L --fail --retry 3 -o /tmp/qpeo-traces/helios.csv \
+            'https://huggingface.co/datasets/Qinghao/AcmeTrace/resolve/main/data/job_trace/trace_previous_work/helios_trace.csv?download=true'
+          curl -L --fail --retry 3 -o /tmp/qpeo-traces/philly.csv \
+            'https://huggingface.co/datasets/Qinghao/AcmeTrace/resolve/main/data/job_trace/trace_previous_work/philly_trace.csv?download=true'
+
+      - name: Extract first 64 eligible chronological workloads
+        shell: bash
+        run: |
+          python - <<'PY'
+          import csv, hashlib, json, math
+          from datetime import datetime
+          from pathlib import Path
+
+          SRC=Path('/tmp/qpeo-traces')
+          OUT=Path('data/scenarios')
+          OUT.mkdir(parents=True, exist_ok=True)
+
+          URLS={
+            'alibaba_gpu_v2023':'https://raw.githubusercontent.com/alibaba/clusterdata/master/cluster-trace-gpu-v2023/csv/openb_pod_list_default.csv',
+            'acme_kalos':'https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/job_trace/trace_kalos.csv',
+            'helios':'https://huggingface.co/datasets/Qinghao/AcmeTrace/resolve/main/data/job_trace/trace_previous_work/helios_trace.csv?download=true',
+            'philly':'https://huggingface.co/datasets/Qinghao/AcmeTrace/resolve/main/data/job_trace/trace_previous_work/philly_trace.csv?download=true',
+          }
+          FILES={
+            'alibaba_gpu_v2023':SRC/'alibaba.csv',
+            'acme_kalos':SRC/'acme_kalos.csv',
+            'helios':SRC/'helios.csv',
+            'philly':SRC/'philly.csv',
+          }
+
+          def sha256(path):
+            h=hashlib.sha256()
+            with open(path,'rb') as f:
+              for chunk in iter(lambda:f.read(1024*1024),b''):
+                h.update(chunk)
+            return h.hexdigest()
+
+          def dt_any(s):
+            s=s.strip()
+            for fmt in ('%Y-%m-%d %H:%M:%S%z','%Y-%m-%d %H:%M:%S','%Y/%m/%d %H:%M','%Y/%m/%d %H:%M:%S'):
+              try: return datetime.strptime(s,fmt)
+              except ValueError: pass
+            try: return datetime.fromisoformat(s.replace('Z','+00:00'))
+            except Exception: raise ValueError(f'Unsupported datetime: {s!r}')
+
+          def positive(x):
+            try:
+              v=float(x)
+              return v if math.isfinite(v) and v>0 else None
+            except Exception:
+              return None
+
+          def load_alibaba(path):
+            rows=[]
+            with open(path,newline='',encoding='utf-8-sig') as f:
+              for r in csv.DictReader(f):
+                if (r.get('pod_phase') or '').strip().lower()!='succeeded': continue
+                num=positive(r.get('num_gpu')) or 0.0
+                milli=positive(r.get('gpu_milli')) or 0.0
+                gpu=(milli/1000.0 if num==1 and milli>0 else num)
+                if not (0<gpu<=1): continue
+                try:
+                  submit=float(r['creation_time']); scheduled=float(r['scheduled_time']); deleted=float(r['deletion_time'])
+                except Exception: continue
+                runtime=deleted-scheduled; queue=scheduled-submit
+                if runtime<=0 or queue<0: continue
+                rows.append(dict(
+                  sort=submit, task_id=r['name'], runtime_s=runtime, queue_s=queue,
+                  gpu=gpu, cpu=positive(r.get('cpu_milli'))/1000.0 if positive(r.get('cpu_milli')) else None,
+                  mem=positive(r.get('memory_mib'))/1024.0 if positive(r.get('memory_mib')) else None,
+                  qos=r.get('qos') or '', state=r.get('pod_phase') or '',
+                  source_submit=str(submit)
+                ))
+            return rows
+
+          def load_acme(path):
+            rows=[]
+            with open(path,newline='',encoding='utf-8-sig') as f:
+              for r in csv.DictReader(f):
+                if (r.get('state') or '').strip().upper()!='COMPLETED': continue
+                gpu=positive(r.get('gpu_num'))
+                runtime=positive(r.get('duration'))
+                if gpu is None or not (0<gpu<=1) or runtime is None: continue
+                try: submit=dt_any(r['submit_time'])
+                except Exception: continue
+                queue=float(r.get('queue') or 0)
+                if queue<0: continue
+                rows.append(dict(
+                  sort=submit, task_id=r['job_id'], runtime_s=runtime, queue_s=queue,
+                  gpu=gpu, cpu=positive(r.get('cpu_num')), mem=positive(r.get('mem_per_pod_GB')),
+                  qos=r.get('type') or '', state=r.get('state') or '',
+                  source_submit=r['submit_time']
+                ))
+            return rows
+
+          def load_helios(path):
+            rows=[]
+            with open(path,newline='',encoding='utf-8-sig') as f:
+              for r in csv.DictReader(f):
+                if (r.get('state') or '').strip().upper()!='COMPLETED': continue
+                gpu=positive(r.get('gpu_num')); runtime=positive(r.get('duration'))
+                if gpu is None or not (0<gpu<=1) or runtime is None: continue
+                try: submit=dt_any(r['submit_time'])
+                except Exception: continue
+                queue=float(r.get('queue') or 0)
+                if queue<0: continue
+                rows.append(dict(
+                  sort=submit, task_id=r['job_id'], runtime_s=runtime, queue_s=queue,
+                  gpu=gpu, cpu=positive(r.get('cpu_num')), mem=None,
+                  qos=r.get('vc') or '', state=r.get('state') or '',
+                  source_submit=r['submit_time']
+                ))
+            return rows
+
+          def load_philly(path):
+            rows=[]
+            with open(path,newline='',encoding='utf-8-sig') as f:
+              for r in csv.DictReader(f):
+                if (r.get('state') or '').strip().lower()!='pass': continue
+                gpu=positive(r.get('gpu_num')); runtime=positive(r.get('duration'))
+                if gpu is None or not (0<gpu<=1) or runtime is None: continue
+                try: submit=dt_any(r['submit_time'])
+                except Exception: continue
+                queue=float(r.get('queue') or 0)
+                if queue<0: continue
+                rows.append(dict(
+                  sort=submit, task_id=r['jobname'], runtime_s=runtime, queue_s=queue,
+                  gpu=gpu, cpu=None, mem=None,
+                  qos=r.get('vc') or '', state=r.get('state') or '',
+                  source_submit=r['submit_time']
+                ))
+            return rows
+
+          loaders={
+            'alibaba_gpu_v2023':load_alibaba,
+            'acme_kalos':load_acme,
+            'helios':load_helios,
+            'philly':load_philly,
+          }
+
+          manifest={
+            'protocol_version':'TRACE4-64-v1',
+            'selection_rule':'first 64 eligible workloads in chronological order after source-specific completed/pass, positive-runtime, and 0<GPU<=1 filters',
+            'materialization':{
+              'cpu_imputation_per_gpu':8.0,
+              'memory_imputation_gib_per_gpu':48.0,
+              'bandwidth_demand':0.0,
+              'carbon_class':'deferred',
+              'deadline_rule':'arrival + observed queue + observed runtime',
+            },
+            'datasets':{}
+          }
+
+          fields=['dataset','task_id','arrival_hours','runtime_hours','queue_hours','deadline_hours','gpu_demand','cpu_demand','memory_gib','bandwidth_demand','carbon_class','qos','source_state','source_submit']
+
+          for key,path in FILES.items():
+            rows=loaders[key](path)
+            rows.sort(key=lambda x:(x['sort'],x['task_id']))
+            eligible=len(rows)
+            if eligible<64:
+              raise RuntimeError(f'{key}: only {eligible} eligible workloads; need 64')
+            sel=rows[:64]
+            t0=sel[0]['sort']
+            out=OUT/f'{key}_64.csv'
+            with open(out,'w',newline='',encoding='utf-8') as f:
+              w=csv.DictWriter(f,fieldnames=fields); w.writeheader()
+              for r in sel:
+                if isinstance(r['sort'],datetime):
+                  arrival=(r['sort']-t0).total_seconds()/3600.0
+                else:
+                  arrival=(float(r['sort'])-float(t0))/3600.0
+                runtime=r['runtime_s']/3600.0
+                queue=r['queue_s']/3600.0
+                cpu=r['cpu'] if r['cpu'] is not None and r['cpu']>0 else 8.0*r['gpu']
+                mem=r['mem'] if r['mem'] is not None and r['mem']>0 else 48.0*r['gpu']
+                w.writerow({
+                  'dataset':key,'task_id':r['task_id'],
+                  'arrival_hours':f'{arrival:.12g}','runtime_hours':f'{runtime:.12g}',
+                  'queue_hours':f'{queue:.12g}','deadline_hours':f'{arrival+queue+runtime:.12g}',
+                  'gpu_demand':f"{r['gpu']:.12g}",'cpu_demand':f'{cpu:.12g}',
+                  'memory_gib':f'{mem:.12g}','bandwidth_demand':'0',
+                  'carbon_class':'deferred','qos':r['qos'],'source_state':r['state'],
+                  'source_submit':r['source_submit'],
+                })
+            manifest['datasets'][key]={
+              'source_url':URLS[key],
+              'source_bytes':path.stat().st_size,
+              'source_sha256':sha256(path),
+              'eligible_workload_count':eligible,
+              'selected_rows':64,
+              'first_task_id':sel[0]['task_id'],
+              'last_task_id':sel[-1]['task_id'],
+              'first_source_submit':sel[0]['source_submit'],
+              'last_source_submit':sel[-1]['source_submit'],
+              'canonical_file':str(out),
+              'canonical_sha256':sha256(out),
+            }
+
+          mpath=OUT/'manifest.json'
+          mpath.write_text(json.dumps(manifest,indent=2,sort_keys=True),encoding='utf-8')
+          print(mpath.read_text())
+          PY
+
+      - name: Commit canonical scenario windows and remove one-off workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/scenarios
+          git rm .github/workflows/materialize_trace_scenarios.yml
+          git commit -m "Materialize frozen 64-workload TRACE4 scenarios"
+          git push
