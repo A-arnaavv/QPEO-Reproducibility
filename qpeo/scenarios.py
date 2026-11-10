@@ -282,3 +282,93 @@ def build_helios_earth_scenario(
         problem=problem,
         qpeo_inputs=qinputs,
     )
+
+
+def build_alibaba_spot_a100_scenario(
+    snapshot_path: str | Path,
+    trace_config_path: str | Path,
+    resource_environment: ResourceEnvironment,
+    carbon_replay: CarbonReplay,
+    *,
+    size: int = 64,
+) -> ScenarioBundle:
+    cfg=json.loads(Path(trace_config_path).read_text(encoding="utf-8"))
+    if cfg.get("dataset_id")!="alibaba_spot_gpu_2026_a100":
+        raise ValueError("Unexpected Alibaba Spot trace config dataset_id")
+    with Path(snapshot_path).open(newline="",encoding="utf-8-sig") as fh:
+        rows=list(csv.DictReader(fh))
+    if len(rows)!=128:
+        raise ValueError("Locked Alibaba Spot snapshot must contain the 128-job superset")
+    rows.sort(key=lambda r:(float(r["submit_time"]),r["job_name"]))
+    window=cfg["selection"]["windows"].get(str(int(size)))
+    if window is None:
+        raise ValueError(f"No locked Alibaba Spot window for size={size}")
+    st,en=int(window["snapshot_start_index"]),int(window["snapshot_end_index"])
+    selected=rows[st:en+1]
+    if len(selected)!=size:
+        raise ValueError("Locked Alibaba Spot window has wrong size")
+    if selected[0]["job_name"]!=window["first_task"] or selected[-1]["job_name"]!=window["last_task"]:
+        raise ValueError("Alibaba Spot snapshot does not match locked window task IDs")
+
+    base_submit=float(selected[0]["submit_time"])
+    workloads=[]; runtimes=[]; ids=[]
+    for row in selected:
+        submit=float(row["submit_time"])
+        duration=float(row["duration"])
+        if duration<=0:
+            raise ValueError("Locked Alibaba Spot snapshot contains non-positive duration")
+        arrival=(submit-base_submit)/3600.0
+        runtime=duration/3600.0
+        kind=row["job_type"]
+        if kind=="HP":
+            deadline=arrival+runtime
+            cclass=CarbonClass.CRITICAL
+        elif kind=="Spot":
+            deadline=float("inf")
+            cclass=CarbonClass.FLEXIBLE
+        else:
+            raise ValueError(f"Unexpected Alibaba Spot job_type: {kind!r}")
+        workloads.append(Workload(
+            name=row["job_name"],
+            cpu_demand=float(row["cpu_request"]),
+            gpu_demand=float(row["gpu_request"]),
+            memory_demand=0.0,
+            bandwidth_demand=0.0,
+            arrival_time=arrival,
+            deadline=deadline,
+            carbon_class=cclass,
+        ))
+        runtimes.append(runtime)
+        ids.append(row["job_name"])
+
+    if tuple(slot.name for slot in resource_environment.slots)!=carbon_replay.slot_names:
+        raise ValueError("Resource environment and carbon replay slot order differ")
+    problem=resource_environment.build_problem(
+        workloads,carbon_replay.intensities[0],carbon_replay.thresholds(),
+        cost_profile="primary_tier_index",
+    )
+
+    source_fp32=float(cfg["service_time"]["source_fp32_tflops"])
+    target_fp32=np.asarray([
+        resource_environment.hardware_classes[slot.hardware_class].fp32_tflops
+        for slot in resource_environment.slots
+    ],dtype=float)
+    base_runtime=np.asarray(runtimes,dtype=float)
+    service=base_runtime[:,None]*(source_fp32/target_fp32[None,:])
+    inv=1.0/service
+    performance=inv/np.max(inv,axis=1,keepdims=True)
+    pmax=resource_environment.max_power_kw()
+    thermal=1.0-pmax/np.max(pmax)
+    dependency=np.zeros((size,size),dtype=float)
+    sim=SimulatorInputs(service,resource_environment.power_model(),"allocated_gpu_hours")
+    qinputs=QPEOInputs(sim,performance,thermal,dependency,carbon_replay)
+    qinputs.validate(size,len(problem.resources))
+    return ScenarioBundle(
+        dataset_id="alibaba_spot_gpu_2026_a100",
+        task_ids=tuple(ids),
+        workloads=tuple(workloads),
+        base_runtime_hours=base_runtime,
+        service_time_hours=service,
+        problem=problem,
+        qpeo_inputs=qinputs,
+    )
