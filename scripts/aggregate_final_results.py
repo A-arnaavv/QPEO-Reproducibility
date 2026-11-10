@@ -34,8 +34,14 @@ def main():
             if key in seen: raise RuntimeError(f"duplicate shard row: {key}")
             seen.add(key)
             obj=a["guide_objectives"]
+            cache_hits=int(a.get("simulation_cache_hits",0))
+            cache_misses=int(a.get("simulation_cache_misses",0))
+            if cache_hits<0 or cache_misses<0:
+                raise RuntimeError(f"Negative simulation counter in {p}")
             row={"scenario":scenario,"seed_index":seed_index,"seed":seed,"algorithm":a["algorithm"],
-                 "runtime_seconds":a["runtime_seconds"],"archive_size":a["archive_size"]}
+                 "runtime_seconds":a["runtime_seconds"],"archive_size":a["archive_size"],
+                 "simulation_cache_hits":cache_hits,"simulation_cache_misses":cache_misses,
+                 "simulator_calls":cache_hits+cache_misses}
             row.update({name:obj[i] for i,name in enumerate(OBJECTIVES)})
             rows.append(row)
     expected={(s,i,a) for s in SCENARIOS for i in range(30) for a in ALGORITHMS}
@@ -47,7 +53,7 @@ def main():
         raise SystemExit(f"final run set is incomplete; first missing entries: {sample}")
     out=root/args.output
     out.parent.mkdir(parents=True,exist_ok=True)
-    fields=["scenario","seed_index","seed","algorithm","runtime_seconds","archive_size",*OBJECTIVES]
+    fields=["scenario","seed_index","seed","algorithm","runtime_seconds","archive_size","simulation_cache_hits","simulation_cache_misses","simulator_calls",*OBJECTIVES]
     with out.open("w",newline="",encoding="utf-8") as f:
         w=csv.DictWriter(f,fieldnames=fields); w.writeheader(); w.writerows(rows)
     print(out)
