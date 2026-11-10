@@ -57,7 +57,8 @@ def evaluate_objectives(problem:ProblemInstance,X:np.ndarray,state:EvaluationSta
     f3=float(np.dot(energy,ci)/f2) if f2>0 else float(zero_energy_carbon_value)
     f4=horizon
     deadlines=np.asarray([w.deadline for w in problem.workloads],float)
-    f5=float(100*np.mean(completion>deadlines))
+    sla_mask=np.isfinite(deadlines)
+    f5=float(100*np.mean(completion[sla_mask]>deadlines[sla_mask])) if np.any(sla_mask) else 0.0
     costs=np.asarray([r.cost_per_gpu_hour for r in problem.resources],float)
     occupied=np.asarray(state.occupied_gpu_hours,float)
     f6=float(np.dot(costs,occupied)/problem.reference_cost)
