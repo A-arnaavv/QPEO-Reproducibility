@@ -13,18 +13,39 @@
     "selection_rule": "first complete Monday-Sunday ISO week of 2026"
   },
   "resource_region_mapping": {
-    "cloud-a6000-0": {"region_id":1,"column":"North Scotland Carbon Intensity Forecast"},
-    "cloud-a5000-0": {"region_id":3,"column":"North West England Carbon Intensity Forecast"},
-    "cloud-4090-0": {"region_id":7,"column":"South Wales Carbon Intensity Forecast"},
-    "edge-orin-0": {"region_id":10,"column":"East England Carbon Intensity Forecast"},
-    "edge-orin-1": {"region_id":12,"column":"South England Carbon Intensity Forecast"},
-    "serverless-a5000-0": {"region_id":13,"column":"London Carbon Intensity Forecast"},
-    "serverless-a5000-1": {"region_id":14,"column":"South East England Carbon Intensity Forecast"}
+    "cloud-a6000-0": {
+      "region_id": 1,
+      "column": "North Scotland Carbon Intensity Forecast"
+    },
+    "cloud-a5000-0": {
+      "region_id": 3,
+      "column": "North West England Carbon Intensity Forecast"
+    },
+    "cloud-4090-0": {
+      "region_id": 7,
+      "column": "South Wales Carbon Intensity Forecast"
+    },
+    "edge-orin-0": {
+      "region_id": 10,
+      "column": "East England Carbon Intensity Forecast"
+    },
+    "edge-orin-1": {
+      "region_id": 12,
+      "column": "South England Carbon Intensity Forecast"
+    },
+    "serverless-a5000-0": {
+      "region_id": 13,
+      "column": "London Carbon Intensity Forecast"
+    },
+    "serverless-a5000-1": {
+      "region_id": 14,
+      "column": "South East England Carbon Intensity Forecast"
+    }
   },
   "threshold_rule": {
-    "critical": "33rd percentile of all finite replay intensities",
-    "deferred": "67th percentile of all finite replay intensities",
-    "flexible": "maximum finite replay intensity plus numerical epsilon"
+    "critical": "max over replay rows of the lowest regional intensity plus numerical epsilon; guarantees >=1 carbon-feasible resource at every replay step",
+    "deferred": "max over replay rows of the 3rd-lowest regional intensity plus numerical epsilon; guarantees >=3 carbon-feasible resources at every replay step",
+    "flexible": "maximum finite replay intensity plus numerical epsilon; guarantees all resources are carbon-feasible"
   },
   "iteration_mapping": "Map optimizer iteration t in [0,T] linearly to replay row round(t*(K-1)/T).",
   "missing_data_policy": "Forward-fill within each selected region after the first observed value; back-fill only initial leading gaps from the first subsequent observed value. Fail if an entire selected region is missing."
