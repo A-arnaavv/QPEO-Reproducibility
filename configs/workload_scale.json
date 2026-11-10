@@ -1,0 +1,7 @@
+{
+  "protocol_version":"v10-workload-scale",
+  "primary":{"workloads_per_scenario":64,"logical_gpu_resources":16,"decision_dimension_D":1024,"population_size":50,"iterations":500,"independent_runs":30,"selection_status":"pre-results"},
+  "scalability_sensitivity":{"workloads":[32,64,128],"resources":16,"dimensions_D":[512,1024,2048]},
+  "sampling_rule":{"method":"chronological contiguous window after dataset-specific validity filters","random_subsampling":false,"reason":"preserve burstiness, arrival correlation, and workload locality rather than cherry-picking individual tasks"},
+  "dataset_specific_policies":"to be frozen after each official trace schema is materialized"
+}
