@@ -44,7 +44,7 @@ def validate_ablation_shard(path: Path, primary: dict) -> dict:
     T = primary["max_iterations"]
     if d.get("max_iterations") != T:
         raise ValueError("Ablation iteration budget mismatch")
-    if not d.get("resource_environment_version") or not d.get("carbon_source"):
+    if not d.get("resource_environment_version") or not d.get("carbon_source") or not d.get("dataset_id") or not d.get("carbon_rows"):
         raise ValueError("Ablation environment provenance missing")
     ablations = d.get("variants")
     if not isinstance(ablations, list) or len(ablations) != len(VARIANTS):
@@ -115,17 +115,23 @@ def audit_ablation_directory(
             source = validate_shard(matching_primary, primary)
             if source["scenario"] != info["scenario"] or source["seed"] != info["seed"]:
                 raise ValueError("Primary result does not match ablation")
+            original = json.loads(matching_primary.read_text())
+            variant = json.loads(p.read_text())
+            for key in ("dataset_id", "resource_environment_version", "carbon_source", "carbon_rows"):
+                if original.get(key) != variant.get(key):
+                    raise ValueError(f"Mismatch in ablation/primary provenance field: {key}")
             valid.append(info)
         except Exception as exc:
             invalid.append({"filename": p.name, "error": str(exc)})
-    expected = {(scenario, i) for scenario in SCENARIOS for i in range(30)}
+    expected = {(scenario, i) for scenario in SCENARIOS for i in range(len(primary["seeds"]))}
+    accepted = {(v["scenario"], v["seed_index"]) for v in valid}
     return {
         "expected_shards": len(expected),
         "paired_valid_shards": len(valid),
         "invalid_or_unpaired": invalid,
         "missing_pairs": [
             {"scenario": s, "seed_index": i}
-            for s, i in sorted(expected-seen)
+            for s, i in sorted(expected-accepted)
         ],
         "validated_shards": valid,
     }
