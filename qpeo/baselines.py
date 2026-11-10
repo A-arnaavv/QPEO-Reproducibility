@@ -598,7 +598,10 @@ def run_abc(problem, simulator_inputs, scalar_weights, *, config=None, limit:int
     pop=rng.uniform(0,1,(cfg.population_size,M,N)); trials=np.zeros(cfg.population_size,int); assignments=[]; objectives=[]
     for i in range(cfg.population_size): X,o=evaluate_scores(problem,simulator_inputs,pop[i]); assignments.append(X); objectives.append(o)
     archive=_initialize_archive(pop,assignments,objectives); bh=[]; gh=[objectives[guide_index(objectives,scalar_weights)].as_array().copy()]; ah=[len(archive.entries)]
-    for _ in range(cfg.max_iterations):
+    for t in range(1,cfg.max_iterations+1):
+        refreshed=_dynamic_refresh(base_problem,cfg,t,simulator_inputs,pop)
+        if refreshed is not None:
+            problem,assignments,objectives,archive=refreshed
         bh.append(float(np.min(scalar_values(objectives,scalar_weights))))
         for i in range(cfg.population_size):
             k=int(rng.choice(np.delete(np.arange(cfg.population_size),i))); phi=rng.uniform(-1,1,size=(M,N)); cand=np.clip(pop[i]+phi*(pop[i]-pop[k]),0,1)
