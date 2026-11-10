@@ -6,7 +6,7 @@ from .operators import (
     assignment_probabilities, biodiversity_restore, candidate_density_proxy,
     caqc_scores, caqc_unconstrained_collapse, ebws_update, ecological_compatibility,
     global_qpso_update, kappa_schedule, local_qpso_update, mantegna_levy_step,
-    qbit_components, validate_angles, von_neumann_entropy,
+    qbit_components, validate_angles, von_neumann_entropy, population_entropy_from_angles,
 )
 from .simulator import PowerModel, SimulationResult, SimulatorInputs, simulate_fixed_assignment
 from .collapse import NoFeasibleAssignment, feasible_caqc_collapse
@@ -19,7 +19,7 @@ __all__ = [
     "ManuscriptQPEOConfig", "assignment_probabilities", "biodiversity_restore", "candidate_density_proxy",
     "caqc_scores", "caqc_unconstrained_collapse", "ebws_update", "ecological_compatibility", "global_qpso_update",
     "kappa_schedule", "local_qpso_update", "mantegna_levy_step", "qbit_components", "validate_angles",
-    "von_neumann_entropy", "PowerModel", "SimulationResult", "SimulatorInputs", "simulate_fixed_assignment",
+    "von_neumann_entropy", "population_entropy_from_angles", "PowerModel", "SimulationResult", "SimulatorInputs", "simulate_fixed_assignment",
     "NoFeasibleAssignment", "feasible_caqc_collapse", "ParetoArchive", "ParetoEntry", "QPEOInputs", "QPEOResult",
     "ReconstructionQPEOSettings", "run_qpeo",
 ]
@@ -60,3 +60,6 @@ __all__ += ["ScenarioBundle", "build_alibaba_gpu_v2023_scenario", "build_elastic
 
 from .resources import HardwareTemplate, ResourcePoolSpec, load_resource_config, build_resource_pool, fp32_normalized_speed_factors
 __all__ += ["HardwareTemplate","ResourcePoolSpec","load_resource_config","build_resource_pool","fp32_normalized_speed_factors"]
+
+from .traces import load_helios_cluster_csv, load_acme_job_csv, load_philly_job_log, shard_multi_gpu_tasks
+__all__ += ["load_helios_cluster_csv","load_acme_job_csv","load_philly_job_log","shard_multi_gpu_tasks"]
