@@ -48,3 +48,12 @@ def test_build_problem_requires_external_carbon_values():
     assert len(problem.resources)==7
     assert problem.reference_cost==pytest.approx(1.0)
     assert problem.resources[0].memory_capacity==pytest.approx(48.0)
+
+
+def test_formal_memory_capacity_uses_host_memory_not_vram():
+    e=env()
+    ci={slot.name:300.0 for slot in e.slots}
+    workloads=[Workload("w",1,.2,48,1,0,2,CarbonClass.FLEXIBLE)]
+    p=e.build_problem(workloads,ci,{CarbonClass.CRITICAL:350,CarbonClass.DEFERRED:400,CarbonClass.FLEXIBLE:500})
+    assert all(r.memory_capacity==pytest.approx(64.0) for r in p.resources)
+    assert e.hardware_classes["rtx_a5000"].gpu_memory_gb==pytest.approx(24.0)
