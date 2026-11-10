@@ -15,9 +15,9 @@ def test_feasible(problem):
 
 def test_objectives(problem):
     X=np.array([[1,0],[0,1]])
-    s=EvaluationState(np.array([3.5,5.0]),np.array([.9,1.1]),np.array([1.0,1.2]))
+    s=EvaluationState(np.array([3.5,5.0]),np.array([.9,1.1]),np.array([1.0,1.2]),np.array([1.0,1.2]))
     o=evaluate_objectives(problem,X,s)
-    assert o.f1_negative_gpu_util==pytest.approx(-.45)
+    assert o.f1_negative_gpu_util==pytest.approx(-.22)
     assert o.f2_energy_kwh==pytest.approx(2.0)
     assert o.f3_energy_weighted_carbon_intensity==pytest.approx((.9*250+1.1*400)/2)
     assert o.f4_makespan==pytest.approx(5.0)
