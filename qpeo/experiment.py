@@ -13,7 +13,7 @@ from .baselines import (
 from .config import ManuscriptQPEOConfig
 from .models import ProblemInstance
 from .optimizer import QPEOInputs, ReconstructionQPEOSettings, run_qpeo
-from .simulator import SimulatorInputs
+from .simulator import SimulatorInputs, clear_simulation_cache, simulation_cache_stats
 
 
 @dataclass(frozen=True)
@@ -24,6 +24,8 @@ class RunRecord:
     guide_objectives: np.ndarray
     archive_size: int
     result: Any
+    cache_hits: int = 0
+    cache_misses: int = 0
 
 
 @dataclass(frozen=True)
@@ -56,8 +58,15 @@ def _run_suite(problem, qpeo_inputs, qpeo_settings, scalar_weights, *, seeds, po
     }
     for seed in seeds:
         for name in names:
+            # A cold cache per algorithm prevents cross-method runtime advantages.
+            clear_simulation_cache()
             t0=perf_counter(); result=runners[name](int(seed)); elapsed=perf_counter()-t0
-            records.append(RunRecord(name,int(seed),float(elapsed),result.guide_objectives.as_array().copy(),len(result.archive.entries),result))
+            cache_stats=simulation_cache_stats()
+            records.append(RunRecord(
+                name,int(seed),float(elapsed),result.guide_objectives.as_array().copy(),
+                len(result.archive.entries),result,
+                cache_hits=cache_stats["hits"],cache_misses=cache_stats["misses"],
+            ))
     return ExperimentSuite(tuple(records))
 
 
