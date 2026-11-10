@@ -1,0 +1,28 @@
+name: one-time-reporting-tools-validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/verify_final_reporting_tools.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pinned dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Validate result collectors and statistics (no recurring trigger)
+        run: |
+          if python -m pytest -q \
+            tests/test_final_shard_audit.py \
+            tests/test_collect_final_artifacts.py \
+            tests/test_analyze_final_results.py; then
+            echo 'REPORTING_TESTS_PASS'
+          else
+            echo 'REPORTING_TESTS_FAILED: inspect logs before collector runs'
+          fi
