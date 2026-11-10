@@ -50,12 +50,15 @@ class EvaluationState:
     completion_times: np.ndarray
     energy_kwh_by_resource: np.ndarray
     occupied_gpu_hours: np.ndarray
+    allocated_gpu_fraction_hours: np.ndarray
     def validate(self,M:int,N:int):
         if np.asarray(self.completion_times).shape!=(M,): raise ValueError(f"completion_times must have shape {(M,)}")
         if np.asarray(self.energy_kwh_by_resource).shape!=(N,): raise ValueError(f"energy_kwh_by_resource must have shape {(N,)}")
         if np.asarray(self.occupied_gpu_hours).shape!=(N,): raise ValueError(f"occupied_gpu_hours must have shape {(N,)}")
+        if np.asarray(self.allocated_gpu_fraction_hours).shape!=(N,): raise ValueError(f"allocated_gpu_fraction_hours must have shape {(N,)}")
         if np.any(np.asarray(self.energy_kwh_by_resource)<0): raise ValueError("Energy cannot be negative.")
         if np.any(np.asarray(self.occupied_gpu_hours)<0): raise ValueError("GPU-hours cannot be negative.")
+        if np.any(np.asarray(self.allocated_gpu_fraction_hours)<0): raise ValueError("Allocated GPU fraction-hours cannot be negative.")
 
 @dataclass(frozen=True)
 class ObjectiveVector:
