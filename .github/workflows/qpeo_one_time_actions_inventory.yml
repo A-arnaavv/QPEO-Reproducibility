@@ -80,6 +80,27 @@ jobs:
                   entry["artifacts_unavailable"] = unavailable
                   entry["artifact_count"] = len(artifacts)
                   entry["artifact_names"] = [a.get("name") for a in artifacts]
+                  if key == "primary_batch":
+                      scenarios = ("alibaba_gpu_v2023", "microsoft_elasticflow_itp_cluster08", "helios_earth", "alibaba_spot_gpu_2026_a100")
+                      expected = {(scenario, seed) for scenario in scenarios for seed in range(1, 30)}
+                      present = set()
+                      for artifact in artifacts:
+                          artifact_name = artifact.get("name", "")
+                          for scenario in scenarios:
+                              prefix = f"qpeo-final-{scenario}-seed"
+                              if artifact_name.startswith(prefix):
+                                  try:
+                                      seed = int(artifact_name[len(prefix):])
+                                      if 1 <= seed <= 29 and not artifact.get("expired"):
+                                          present.add((scenario, seed))
+                                  except ValueError:
+                                      pass
+                      entry["batch_expected"] = len(expected)
+                      entry["batch_artifact_seed_count"] = len(present)
+                      entry["missing_artifact_seeds_by_scenario"] = {
+                          scenario: [seed for seed in range(1, 30) if (scenario, seed) not in present]
+                          for scenario in scenarios
+                      }
                   entry["expired_artifact_count"] = sum(bool(a.get("expired")) for a in artifacts)
                   if key in ("primary_batch", "seed0_parity"):
                       jobs, _ = all_pages(f"{base}/actions/runs/{run['id']}/jobs", "jobs", 3)
