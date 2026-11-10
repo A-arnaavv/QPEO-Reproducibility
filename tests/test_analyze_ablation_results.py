@@ -46,6 +46,14 @@ def make_records(n=2):
                     }
                     for name in VARIANTS
                 ],
+                "secondary_baselines": [{
+                    "variant": "elitist_random_search",
+                    "guide_objectives": [1.7+i/10] * 6,
+                    "simulation_cache_hits": 13,
+                    "simulation_cache_misses": 23,
+                    "runtime_seconds": .12,
+                    "archive_size": 2,
+                }],
             })
     return ablation, primary
 
@@ -53,23 +61,24 @@ def make_records(n=2):
 def test_ablation_comparison_families_and_descriptive_counts():
     ablation, primary = make_records()
     result = compute_ablation_stats(ablation, primary, seed_count=2)
-    assert len(ALGORITHMS)==7
-    assert len(COMPARE)==6
-    assert COMPARISONS_PER_SCENARIO==36
-    assert GLOBAL_COMPARISONS==144
-    assert len(result["descriptive_statistics"]) == len(SCENARIOS)*9*7
-    assert len(result["paired_wilcoxon"]) == len(SCENARIOS)*6*6
+    assert len(ALGORITHMS)==8
+    assert len(COMPARE)==7
+    assert COMPARISONS_PER_SCENARIO==42
+    assert GLOBAL_COMPARISONS==168
+    assert len(result["descriptive_statistics"]) == len(SCENARIOS)*9*8
+    assert len(result["paired_wilcoxon"]) == len(SCENARIOS)*6*7
     for row in result["paired_wilcoxon"]:
         assert row["n"]==2
         assert row["mean_qpeo_minus_comparator"] < 0
         assert row["qpeo_better_seed_count"] == 2
         assert row["comparator_better_seed_count"] == 0
         assert row["ties"] == 0
-        assert 0 <= row["p_raw"] <= row["p_bonferroni_36"] <= 1
-        assert 0 <= row["p_bonferroni_144"] <= 1
-        assert row["p_bonferroni_144"] >= row["p_bonferroni_36"]
+        assert 0 <= row["p_raw"] <= row["p_bonferroni_42"] <= 1
+        assert 0 <= row["p_bonferroni_168"] <= 1
+        assert row["p_bonferroni_168"] >= row["p_bonferroni_42"]
         assert row["comparator_type"] == (
             "classical_reference" if row["comparator"]=="classical_fpa"
+            else "random_search_reference" if row["comparator"]=="elitist_random_search"
             else "operator_ablation"
         )
 
