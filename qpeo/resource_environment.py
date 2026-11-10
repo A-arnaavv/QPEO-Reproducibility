@@ -28,6 +28,7 @@ class ResourceSlotSpec:
     hardware_class: str
     gpu_capacity: float
     cpu_capacity: float | None
+    host_memory_gb: float
     cost_index_primary: float
 
 
@@ -53,8 +54,8 @@ class ResourceEnvironment:
         for slot in self.slots:
             if slot.hardware_class not in self.hardware_classes:
                 raise ValueError(f"Unknown hardware class {slot.hardware_class!r}")
-            if slot.gpu_capacity <= 0 or slot.cost_index_primary <= 0:
-                raise ValueError("resource capacities and primary costs must be > 0")
+            if slot.gpu_capacity <= 0 or slot.host_memory_gb <= 0 or slot.cost_index_primary <= 0:
+                raise ValueError("resource capacities, host memory, and primary costs must be > 0")
         if not (0 <= self.primary_idle_fraction < 1):
             raise ValueError("primary idle fraction must lie in [0,1)")
         if self.primary_power_exponent <= 0:
@@ -117,7 +118,7 @@ class ResourceEnvironment:
             resources.append(Resource(
                 name=slot.name,
                 gpu_capacity=float(slot.gpu_capacity),
-                memory_capacity=float(hw.gpu_memory_gb),
+                memory_capacity=float(slot.host_memory_gb),
                 carbon_intensity=float(ci[idx]),
                 cost_per_gpu_hour=float(costs[idx]),
                 cpu_capacity=None if slot.cpu_capacity is None else float(slot.cpu_capacity),
@@ -153,6 +154,7 @@ def load_resource_environment(path: str | Path) -> ResourceEnvironment:
         hardware_class=str(x["hardware_class"]),
         gpu_capacity=float(x["gpu_capacity"]),
         cpu_capacity=None if x.get("cpu_capacity") is None else float(x["cpu_capacity"]),
+        host_memory_gb=float(x["host_memory_gb"]),
         cost_index_primary=float(x["cost_index_primary"]),
     ) for x in raw["resource_slots"])
     power = raw["power_model"]
