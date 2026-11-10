@@ -252,3 +252,30 @@ end-to-end interval from creation to deletion; service-time baseline is the obse
 scheduled-to-deletion runtime. Cross-resource service times use the pre-registered
 FP32 relative-speed proxy. Inter-job dependency is set to zero because this trace does
 not expose dependency metadata.
+
+
+## Microsoft ElasticFlow trace protocol TRACE2-v12
+TRACE2 uses the official `microsoft/elasticflow-traces` repository. The raw archive is
+pinned by Git blob SHA `8147e243486d25a21abb12c1e50cbcf90aa72ebc` and SHA-256
+`67398e1a89245c50ae0881bf997e6cda0c95f9f47980af5bc56d67998965669f`.
+The authors' experiment archive is pinned by Git blob SHA
+`bf9e3ccae14b35410a213b2528c02e71906f8890` and SHA-256
+`e9c20b73de61d2702aef086aebc995cbc432affbd0f09969cf30879c5d1a83c4`.
+
+Among the ten clusters, Cluster08 is selected because it has the largest number of
+positive-duration single-GPU raw jobs (12,558). Every one of those jobs has an exact
+`job_id` match in the authors' experiment trace. Jobs are sorted by submission time
+and sampled with the same pre-registered anchor fraction used for TRACE1. The primary
+64-job window is indices 7822--7885, from
+`fd68fa2d-ed9f-6fe1-0a85-877c7b6de8da` through
+`42dfd273-4486-8e16-9a12-9f4ce099e4b5`; 32- and 128-job nested windows are
+also locked.
+
+Arrival time, duration, and one-GPU demand come from the raw production trace.
+Deadline comes from the matching ElasticFlow experiment trace and is therefore an
+author-generated experimental SLA field, not a raw production measurement. Its
+slack-to-duration ratio is split at precomputed 33rd/67th percentiles
+(0.8275201174 and 1.1668952957) to map jobs to critical/deferred/flexible carbon
+classes before optimizer results are observed. CPU, memory and bandwidth demand are
+set to zero/non-binding because the raw trace does not publish those fields. Service
+time uses the same documented FP32 relative-speed reconstruction proxy as TRACE1.
