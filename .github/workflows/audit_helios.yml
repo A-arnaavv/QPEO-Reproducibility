@@ -1,0 +1,26 @@
+name: audit-helios-trace
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/audit_helios.py"
+      - ".github/workflows/audit_helios.yml"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download official Helios archive
+        run: |
+          mkdir -p audit/helios
+          curl -fL https://raw.githubusercontent.com/S-Lab-System-Group/HeliosData/master/data.zip -o /tmp/helios.zip
+          echo "helios sha256 $(sha256sum /tmp/helios.zip)"
+          unzip -q /tmp/helios.zip -d audit/helios
+          find audit/helios -type f | sort | head -30
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Audit Helios
+        run: python scripts/audit_helios.py
