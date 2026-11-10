@@ -50,3 +50,6 @@ from .resource_environment import (
     HardwareClassSpec, ResourceSlotSpec, ResourceEnvironment, load_resource_environment,
 )
 __all__ += ["HardwareClassSpec", "ResourceSlotSpec", "ResourceEnvironment", "load_resource_environment"]
+
+from .carbon import CarbonReplay, load_carbon_replay_config, load_neso_regional_replay, with_carbon_intensities
+__all__ += ["CarbonReplay", "load_carbon_replay_config", "load_neso_regional_replay", "with_carbon_intensities"]
