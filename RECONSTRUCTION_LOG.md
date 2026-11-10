@@ -157,3 +157,22 @@ Convergence-to-90% must be computed from a raw consistently scaled metric histor
 per-iteration min-max scalar fitness is not suitable because its scale changes with the
 population. Raw objective histories will be added to experiment outputs before final
 paper convergence values are regenerated.
+
+
+## Resource-environment protocol RENV1
+The rebuilt cloud--edge--serverless resource pool is locked before the final trace
+runs in `configs/resource_environment_v1.json`. Hardware memory, maximum GPU/module
+power, and FP32 throughput are taken from NVIDIA specifications for RTX 4090,
+RTX A6000, RTX A5000, and Jetson AGX Orin 64GB. FP32 throughput is used only as a
+transparent relative service-speed proxy normalized to RTX A6000; it is not presented
+as an application-specific measured speedup.
+
+The primary power model is GPU-side incremental power, P(u)=Pmax*u, with zero idle
+term so that the primary model uses only sourced maximum GPU/module power rather
+than inventing unsourced idle values. Idle fractions of 0.10 and 0.20 are predeclared
+sensitivity settings.
+
+The primary infrastructure-cost coefficients are dimensionless reconstruction cost
+indices rather than USD prices. Two additional cost profiles (performance-proportional
+and power-proportional) are predeclared for sensitivity analysis. This avoids implying
+that the lost implementation's provider-specific hourly prices were recovered.
