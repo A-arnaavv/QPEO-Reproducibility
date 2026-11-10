@@ -47,7 +47,7 @@ def test_build_problem_requires_external_carbon_values():
     problem=e.build_problem(workloads,ci,{CarbonClass.CRITICAL:250,CarbonClass.DEFERRED:400,CarbonClass.FLEXIBLE:500})
     assert len(problem.resources)==7
     assert problem.reference_cost==pytest.approx(1.0)
-    assert problem.resources[0].memory_capacity==pytest.approx(48.0)
+    assert problem.resources[0].memory_capacity==pytest.approx(64.0)
 
 
 def test_formal_memory_capacity_uses_host_memory_not_vram():
