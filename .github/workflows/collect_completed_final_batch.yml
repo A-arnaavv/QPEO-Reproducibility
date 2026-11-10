@@ -86,3 +86,28 @@ jobs:
           done
           echo 'PUSH_FAILED: batch artifacts still available from GitHub Actions.'
           exit 1
+
+      - name: Compute and preserve full statistical report
+        if: success()
+        shell: bash
+        run: |
+          if [ ! -f /tmp/qpeo_all_final_valid ]; then
+            echo 'STATISTICS_DEFERRED: some locked seeds are missing or invalid'
+            exit 0
+          fi
+          python scripts/analyze_final_results.py
+          git add results/analysis
+          git commit -m "Analyze 120 locked shards with paired tests and confidence intervals"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if ! git rebase origin/main; then
+              echo 'ANALYSIS_REBASE_CONFLICT; raw result files remain saved'
+              exit 1
+            fi
+            if git push origin HEAD:main; then
+              echo 'FULL_STATISTICS_COMMITTED'
+              exit 0
+            fi
+          done
+          echo 'ANALYSIS_PUSH_FAILED; raw result files remain saved'
+          exit 1
