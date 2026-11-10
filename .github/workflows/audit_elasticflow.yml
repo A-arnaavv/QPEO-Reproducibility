@@ -1,0 +1,29 @@
+name: audit-elasticflow-traces
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/audit_elasticflow.py"
+      - ".github/workflows/audit_elasticflow.yml"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download pinned official archives
+        run: |
+          mkdir -p audit/raw audit/exp
+          curl -fL https://raw.githubusercontent.com/microsoft/elasticflow-traces/main/data/raw-traces.tar.gz -o /tmp/raw.tar.gz
+          curl -fL https://raw.githubusercontent.com/microsoft/elasticflow-traces/main/data/elasticflow-traces.tar.gz -o /tmp/exp.tar.gz
+          echo "raw sha256 $(sha256sum /tmp/raw.tar.gz)"
+          echo "exp sha256 $(sha256sum /tmp/exp.tar.gz)"
+          tar -xzf /tmp/raw.tar.gz -C audit/raw
+          tar -xzf /tmp/exp.tar.gz -C audit/exp
+          find audit -type f -maxdepth 4 | sort
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Audit traces
+        run: python scripts/audit_elasticflow.py
