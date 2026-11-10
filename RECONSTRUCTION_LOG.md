@@ -323,3 +323,22 @@ from the pooled native CPU-per-GPU median across Alibaba, Helios, and Acme. Thes
 values are computed and frozen before optimizer execution. Bandwidth is set to zero
 when unavailable because the primary traces lack a consistent bandwidth-request field
 and bandwidth is not a current formal hard constraint.
+
+
+## Final-run reproducibility and computational-budget caveat
+The locked primary experiment matches all 13 algorithms on the same scenario,
+seed index, population size P=50, and iteration count T=500. **This is not an
+identical objective-evaluation budget**: evolutionary, swarm and constructive
+methods perform different numbers of candidate evaluations per iteration. Every
+final result therefore preserves per-method simulator cache hits and misses;
+`hits + misses` reports simulator invocations as a diagnostic (including repeated
+assignments), alongside algorithm runtime. Do not describe the primary comparison
+as NFE-matched in the manuscript; use an explicit evaluation-matched sensitivity
+study if that claim is required.
+
+The final study uses the locked NESO carbon replay and four trace configurations
+named in `configs/reconstruction_protocol.json`. Earlier exploration drafts and
+prototype configs (including the Acme/Philly primary-trace proposal and
+Electricity Maps prototype) are superseded, not additional primary datasets.
+NumPy 2.4.6, SciPy 1.17.1 and pytest 9.2.0 are pinned to the versions used by the
+successful final-protocol GitHub runner jobs.
