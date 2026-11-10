@@ -260,6 +260,18 @@
       "algorithms": 13,
       "result": "passed",
       "validated_commit": "f81299a0e132a90076f14c275bf140c4b9ff9d54"
+    },
+    "simulation_memoization": {
+      "status": "validated-before-final-results",
+      "scope": "per algorithm; cold cache at algorithm start",
+      "cached_component": "deterministic temporal schedule simulation for identical assignment matrices",
+      "recomputed_on_every_evaluation": [
+        "dynamic carbon feasibility",
+        "carbon-weighted objective f3",
+        "all six objective values from current problem state"
+      ],
+      "fairness_rule": "cache is cleared before every algorithm; no cross-algorithm reuse",
+      "benchmark_note": "real-scenario P=10,T=20 benchmark showed cache hit rates from 10% to 94% depending on algorithm"
     }
   }
 }
