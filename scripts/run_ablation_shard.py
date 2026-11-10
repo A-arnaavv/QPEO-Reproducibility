@@ -143,6 +143,7 @@ def main() -> None:
         "schema_version": "qpeo-ablation-shard-v1",
         "final_protocol": is_final,
         "scenario": args.scenario,
+        "dataset_id": bundle.dataset_id,
         "seed_index": args.seed_index,
         "seed": seed,
         "size": args.size,
@@ -151,6 +152,7 @@ def main() -> None:
         "git_sha": os.environ.get("GITHUB_SHA"),
         "resource_environment_version": env.version,
         "carbon_source": replay.source_name,
+        "carbon_rows": replay.rows,
         "variants": records,
     }
     if len(records) != len(VARIANTS):
