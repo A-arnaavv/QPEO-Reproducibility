@@ -117,7 +117,6 @@
   "unresolved_before_final_runs": [
     "sampling/materialization protocol for non-Alibaba datasets",
     "Google-v3 GPU-demand reconstruction policy",
-    "Azure Functions CPU/GPU/memory/bandwidth reconstruction policy",
     "Kubernetes benchmark source or synthetic generator specification",
     "performance-affinity construction",
     "thermal-headroom construction",
@@ -172,6 +171,29 @@
         "BE": "flexible"
       },
       "service_time_rule": "source observed runtime scaled by locked FP32 resource speed factors"
+    },
+    "microsoft_elasticflow_itp_cluster08": {
+      "status": "locked-pre-results",
+      "config": "configs/trace_elasticflow_itp.json",
+      "snapshot": "data/elasticflow_cluster08_single_gpu.csv",
+      "raw_archive_blob_sha": "8147e243486d25a21abb12c1e50cbcf90aa72ebc",
+      "experiment_archive_blob_sha": "bf9e3ccae14b35410a213b2528c02e71906f8890",
+      "eligible_count": 12558,
+      "cluster_rule": "cluster with largest positive-duration single-GPU raw-job count",
+      "primary_jobs": 64,
+      "scalability_jobs": [
+        32,
+        64,
+        128
+      ],
+      "primary_window": [
+        "fd68fa2d-ed9f-6fe1-0a85-877c7b6de8da",
+        "42dfd273-4486-8e16-9a12-9f4ce099e4b5"
+      ],
+      "source_fields": "raw submission_time, duration and num_gpu; matching authors' experiment-trace deadline",
+      "missing_resource_fields": "CPU, memory, bandwidth set to zero/non-binding because the source does not provide them",
+      "carbon_class_rule": "tertiles of source-generated deadline slack ratio",
+      "service_time_rule": "raw duration scaled by locked FP32 resource speed factors"
     }
   }
 }
