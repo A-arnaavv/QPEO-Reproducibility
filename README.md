@@ -84,3 +84,11 @@ The carbon replay is now consumed inside the optimization loops. QPEO and all 12
 baselines receive the same carbon vector at each iteration. Current populations are
 re-evaluated after each refresh, and current-state Pareto archives prevent stale carbon
 objectives from contaminating comparisons across time.
+
+
+## v11 Alibaba GPU trace scenario
+The first real trace scenario is locked from Alibaba GPU Trace v2023. The repository
+stores the 178-job eligible Succeeded single/fractional-GPU pool together with the
+upstream Git blob SHA. A deterministic contiguous 64-job block is the primary
+experiment, with nested 32/128-job scalability windows. Source execution time and
+end-to-end latency are retained; no synthetic Alibaba deadline multiplier is used.
