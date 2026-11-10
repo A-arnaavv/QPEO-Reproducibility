@@ -1,0 +1,75 @@
+{
+  "dataset_id": "helios_earth",
+  "status": "locked-pre-results",
+  "source": {
+    "repository": "S-Lab-System-Group/HeliosData",
+    "ref": "master",
+    "archive_path": "data.zip",
+    "archive_blob_sha": "1a48d5e0fb816fe9bbf1ad7086e7dec90923e5c6",
+    "archive_sha256": "3d22a5f6c0ae669e2fcbfe4200fa9c48664507bc397c677bad8f085222c032ac",
+    "cluster": "Earth",
+    "cluster_file": "data/Earth/cluster_log.csv"
+  },
+  "selection": {
+    "cluster_rule": "cluster with largest completed single-GPU job pool",
+    "eligible_rule": "state==COMPLETED, gpu_num==1, duration>0, 0<=cpu_num<=16, valid submit/start/end timestamps",
+    "eligible_count": 293903,
+    "anchor_fraction": 0.6260788463455607,
+    "primary_size": 64,
+    "scalability_sizes": [
+      32,
+      64,
+      128
+    ],
+    "windows": {
+      "32": {
+        "start_index": 183986,
+        "end_index": 184017,
+        "first_task": "1739082",
+        "last_task": "1739650",
+        "submission_span_hours": 0.9308333333333333,
+        "snapshot_start_index": 60,
+        "snapshot_end_index": 91
+      },
+      "64": {
+        "start_index": 183966,
+        "end_index": 184029,
+        "first_task": "1738622",
+        "last_task": "1739705",
+        "submission_span_hours": 1.7675,
+        "snapshot_start_index": 40,
+        "snapshot_end_index": 103
+      },
+      "128": {
+        "start_index": 183926,
+        "end_index": 184053,
+        "first_task": "1738482",
+        "last_task": "1739951",
+        "submission_span_hours": 2.38,
+        "snapshot_start_index": 0,
+        "snapshot_end_index": 127
+      }
+    },
+    "snapshot": "data/helios_earth_selected_128.csv"
+  },
+  "workload_mapping": {
+    "gpu_demand": 1.0,
+    "cpu_demand": "cpu_num",
+    "memory_demand": 0.0,
+    "bandwidth_demand": 0.0,
+    "arrival_time": "submit_time relative to first job in selected window",
+    "observed_runtime": "duration / 3600 (source start-to-end)",
+    "deadline": "source end_time relative to first selected submit_time",
+    "carbon_class": "deferred for all jobs because Helios exposes no priority/SLA class"
+  },
+  "service_time": {
+    "primary_rule": "observed duration / locked FP32 resource speed factor",
+    "reference_hardware": "RTX A6000 normalized speed factor 1.0",
+    "limitation": "source GPU model is not identified per job; this is a reconstruction proxy"
+  },
+  "qpeo_features": {
+    "performance_affinity": "row-wise normalized inverse service time",
+    "thermal_headroom": "1 - resource_max_power / max_resource_max_power",
+    "dependency_matrix": "all zeros because the trace does not expose job dependency metadata"
+  }
+}
