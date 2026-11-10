@@ -187,8 +187,25 @@ in fixed slot order to predeclared GB regions; this mapping is locked before the
 optimizer results are generated.
 
 Carbon-sensitivity thresholds are derived from the replay, not tuned to QPEO:
-critical = pooled 33rd percentile, deferred = pooled 67th percentile, and flexible =
-maximum replay intensity plus numerical epsilon. Optimizer iteration t is mapped
+critical = the worst-case row minimum, deferred = the worst-case third-lowest regional
+intensity, and flexible = the replay-wide maximum, each with numerical epsilon. This
+guarantees at least 1, 3, and all resources respectively remain carbon-feasible at
+every replay step. Optimizer iteration t is mapped
 linearly to the replay row index round(t*(K-1)/T). Missing regional values use a
 predeclared within-region forward-fill/back-fill rule and a region with no observations
 causes the experiment to fail.
+
+
+## Dynamic-carbon protocol DYN1
+The locked carbon replay is applied to every optimizer, not only QPEO. At iteration
+t, the common problem instance is refreshed with the same replay vector for QPEO and
+all twelve baselines. Existing populations are re-decoded/re-evaluated under the new
+carbon state before the iteration's search update. QPEO additionally recomputes the
+ecological-compatibility matrix because Eq. (10) contains carbon intensity.
+
+Because objective f3 and carbon-feasibility constraints change with the grid state, a
+historical Pareto archive would contain stale objective values. Under DYN1 the archive
+is therefore rebuilt from the current population after each carbon refresh and then
+updated within the iteration. PSO personal-best positions are also re-evaluated under
+the current carbon state before selecting its global guide. This is a reconstruction
+choice for nonstationary optimization and is applied symmetrically across methods.
