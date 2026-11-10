@@ -57,5 +57,5 @@ __all__ += ["CarbonReplay", "load_carbon_replay_config", "load_neso_regional_rep
 from .scenarios import ScenarioBundle, build_alibaba_gpu_v2023_scenario, build_elasticflow_itp_scenario, build_helios_earth_scenario
 __all__ += ["ScenarioBundle", "build_alibaba_gpu_v2023_scenario", "build_elasticflow_itp_scenario", "build_helios_earth_scenario"]
 
-from .resources import HardwareTemplate, ResourcePoolSpec, load_resource_config, build_resource_pool
-__all__ += ["HardwareTemplate", "ResourcePoolSpec", "load_resource_config", "build_resource_pool"]
+from .resources import HardwareTemplate, ResourcePoolSpec, load_resource_config, build_resource_pool, fp32_normalized_speed_factors
+__all__ += ["HardwareTemplate", "ResourcePoolSpec", "load_resource_config", "build_resource_pool", "fp32_normalized_speed_factors"]
