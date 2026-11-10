@@ -56,3 +56,9 @@ be fixed before the real trace experiments: 30 deterministic seeds, equal primar
 six-objective guide weights, equal primary ecological-compatibility weights,
 dependency settings, and sensitivity grids. Hardware- and trace-dependent settings
 remain explicitly unresolved and must be fixed before the final runs.
+
+
+### Raw convergence histories
+Every optimizer now records the six raw guide-objective values at initialization and
+after every iteration (T+1 rows). Convergence-to-90% analyses must use these raw,
+consistently scaled histories rather than the changing within-population scalar score.
