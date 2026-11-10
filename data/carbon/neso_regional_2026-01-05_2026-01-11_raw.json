@@ -2,7 +2,7 @@
   "1": {
     "name": "North Scotland",
     "column": "North Scotland Carbon Intensity Forecast",
-    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-11T23:59Z/regionid/1",
+    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-12T00:00Z/regionid/1",
     "payload": {
       "data": {
         "regionid": 1,
@@ -15464,6 +15464,52 @@
                 "perc": 100
               }
             ]
+          },
+          {
+            "from": "2026-01-11T23:30Z",
+            "to": "2026-01-12T00:00Z",
+            "intensity": {
+              "forecast": 0,
+              "index": "very low"
+            },
+            "generationmix": [
+              {
+                "fuel": "biomass",
+                "perc": 0
+              },
+              {
+                "fuel": "coal",
+                "perc": 0
+              },
+              {
+                "fuel": "imports",
+                "perc": 0
+              },
+              {
+                "fuel": "gas",
+                "perc": 0
+              },
+              {
+                "fuel": "nuclear",
+                "perc": 0
+              },
+              {
+                "fuel": "other",
+                "perc": 0
+              },
+              {
+                "fuel": "hydro",
+                "perc": 0
+              },
+              {
+                "fuel": "solar",
+                "perc": 0
+              },
+              {
+                "fuel": "wind",
+                "perc": 100
+              }
+            ]
           }
         ]
       }
@@ -15472,7 +15518,7 @@
   "3": {
     "name": "North West England",
     "column": "North West England Carbon Intensity Forecast",
-    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-11T23:59Z/regionid/3",
+    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-12T00:00Z/regionid/3",
     "payload": {
       "data": {
         "regionid": 3,
@@ -30934,6 +30980,52 @@
                 "perc": 59.1
               }
             ]
+          },
+          {
+            "from": "2026-01-11T23:30Z",
+            "to": "2026-01-12T00:00Z",
+            "intensity": {
+              "forecast": 46,
+              "index": "low"
+            },
+            "generationmix": [
+              {
+                "fuel": "biomass",
+                "perc": 0.7
+              },
+              {
+                "fuel": "coal",
+                "perc": 0
+              },
+              {
+                "fuel": "imports",
+                "perc": 1
+              },
+              {
+                "fuel": "gas",
+                "perc": 10.3
+              },
+              {
+                "fuel": "nuclear",
+                "perc": 27.6
+              },
+              {
+                "fuel": "other",
+                "perc": 0
+              },
+              {
+                "fuel": "hydro",
+                "perc": 0
+              },
+              {
+                "fuel": "solar",
+                "perc": 0
+              },
+              {
+                "fuel": "wind",
+                "perc": 60.4
+              }
+            ]
           }
         ]
       }
@@ -30942,7 +31034,7 @@
   "7": {
     "name": "South Wales",
     "column": "South Wales Carbon Intensity Forecast",
-    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-11T23:59Z/regionid/7",
+    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-12T00:00Z/regionid/7",
     "payload": {
       "data": {
         "regionid": 7,
@@ -46404,6 +46496,52 @@
                 "perc": 59.5
               }
             ]
+          },
+          {
+            "from": "2026-01-11T23:30Z",
+            "to": "2026-01-12T00:00Z",
+            "intensity": {
+              "forecast": 131,
+              "index": "moderate"
+            },
+            "generationmix": [
+              {
+                "fuel": "biomass",
+                "perc": 0.1
+              },
+              {
+                "fuel": "coal",
+                "perc": 0
+              },
+              {
+                "fuel": "imports",
+                "perc": 0.4
+              },
+              {
+                "fuel": "gas",
+                "perc": 32.7
+              },
+              {
+                "fuel": "nuclear",
+                "perc": 2.4
+              },
+              {
+                "fuel": "other",
+                "perc": 0
+              },
+              {
+                "fuel": "hydro",
+                "perc": 0
+              },
+              {
+                "fuel": "solar",
+                "perc": 0
+              },
+              {
+                "fuel": "wind",
+                "perc": 64.4
+              }
+            ]
           }
         ]
       }
@@ -46412,7 +46550,7 @@
   "10": {
     "name": "East England",
     "column": "East England Carbon Intensity Forecast",
-    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-11T23:59Z/regionid/10",
+    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-12T00:00Z/regionid/10",
     "payload": {
       "data": {
         "regionid": 10,
@@ -61874,6 +62012,52 @@
                 "perc": 58
               }
             ]
+          },
+          {
+            "from": "2026-01-11T23:30Z",
+            "to": "2026-01-12T00:00Z",
+            "intensity": {
+              "forecast": 73,
+              "index": "low"
+            },
+            "generationmix": [
+              {
+                "fuel": "biomass",
+                "perc": 1.5
+              },
+              {
+                "fuel": "coal",
+                "perc": 0
+              },
+              {
+                "fuel": "imports",
+                "perc": 0
+              },
+              {
+                "fuel": "gas",
+                "perc": 18.1
+              },
+              {
+                "fuel": "nuclear",
+                "perc": 21
+              },
+              {
+                "fuel": "other",
+                "perc": 0
+              },
+              {
+                "fuel": "hydro",
+                "perc": 0
+              },
+              {
+                "fuel": "solar",
+                "perc": 0
+              },
+              {
+                "fuel": "wind",
+                "perc": 59.3
+              }
+            ]
           }
         ]
       }
@@ -61882,7 +62066,7 @@
   "12": {
     "name": "South England",
     "column": "South England Carbon Intensity Forecast",
-    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-11T23:59Z/regionid/12",
+    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-12T00:00Z/regionid/12",
     "payload": {
       "data": {
         "regionid": 12,
@@ -77344,6 +77528,52 @@
                 "perc": 52.8
               }
             ]
+          },
+          {
+            "from": "2026-01-11T23:30Z",
+            "to": "2026-01-12T00:00Z",
+            "intensity": {
+              "forecast": 144,
+              "index": "moderate"
+            },
+            "generationmix": [
+              {
+                "fuel": "biomass",
+                "perc": 5.5
+              },
+              {
+                "fuel": "coal",
+                "perc": 0
+              },
+              {
+                "fuel": "imports",
+                "perc": 1.5
+              },
+              {
+                "fuel": "gas",
+                "perc": 33.2
+              },
+              {
+                "fuel": "nuclear",
+                "perc": 8.2
+              },
+              {
+                "fuel": "other",
+                "perc": 0
+              },
+              {
+                "fuel": "hydro",
+                "perc": 0
+              },
+              {
+                "fuel": "solar",
+                "perc": 0
+              },
+              {
+                "fuel": "wind",
+                "perc": 51.7
+              }
+            ]
           }
         ]
       }
@@ -77352,7 +77582,7 @@
   "13": {
     "name": "London",
     "column": "London Carbon Intensity Forecast",
-    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-11T23:59Z/regionid/13",
+    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-12T00:00Z/regionid/13",
     "payload": {
       "data": {
         "regionid": 13,
@@ -92814,6 +93044,52 @@
                 "perc": 56.1
               }
             ]
+          },
+          {
+            "from": "2026-01-11T23:30Z",
+            "to": "2026-01-12T00:00Z",
+            "intensity": {
+              "forecast": 100,
+              "index": "moderate"
+            },
+            "generationmix": [
+              {
+                "fuel": "biomass",
+                "perc": 1.4
+              },
+              {
+                "fuel": "coal",
+                "perc": 0
+              },
+              {
+                "fuel": "imports",
+                "perc": 0.1
+              },
+              {
+                "fuel": "gas",
+                "perc": 24.8
+              },
+              {
+                "fuel": "nuclear",
+                "perc": 16.3
+              },
+              {
+                "fuel": "other",
+                "perc": 0
+              },
+              {
+                "fuel": "hydro",
+                "perc": 0.1
+              },
+              {
+                "fuel": "solar",
+                "perc": 0
+              },
+              {
+                "fuel": "wind",
+                "perc": 57.4
+              }
+            ]
           }
         ]
       }
@@ -92822,7 +93098,7 @@
   "14": {
     "name": "South East England",
     "column": "South East England Carbon Intensity Forecast",
-    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-11T23:59Z/regionid/14",
+    "url": "https://api.carbonintensity.org.uk/regional/intensity/2026-01-05T00:00Z/2026-01-12T00:00Z/regionid/14",
     "payload": {
       "data": {
         "regionid": 14,
@@ -108282,6 +108558,52 @@
               {
                 "fuel": "wind",
                 "perc": 51.6
+              }
+            ]
+          },
+          {
+            "from": "2026-01-11T23:30Z",
+            "to": "2026-01-12T00:00Z",
+            "intensity": {
+              "forecast": 162,
+              "index": "moderate"
+            },
+            "generationmix": [
+              {
+                "fuel": "biomass",
+                "perc": 0.5
+              },
+              {
+                "fuel": "coal",
+                "perc": 0
+              },
+              {
+                "fuel": "imports",
+                "perc": 0
+              },
+              {
+                "fuel": "gas",
+                "perc": 41
+              },
+              {
+                "fuel": "nuclear",
+                "perc": 7
+              },
+              {
+                "fuel": "other",
+                "perc": 0
+              },
+              {
+                "fuel": "hydro",
+                "perc": 0.4
+              },
+              {
+                "fuel": "solar",
+                "perc": 0
+              },
+              {
+                "fuel": "wind",
+                "perc": 51.1
               }
             ]
           }
