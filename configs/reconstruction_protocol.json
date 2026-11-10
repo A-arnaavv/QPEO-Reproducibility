@@ -1,0 +1,51 @@
+{
+  "protocol_version": "v6-pre-registered-reconstruction",
+  "status": "pre-results",
+  "primary": {
+    "population_size": 50,
+    "max_iterations": 500,
+    "runs_per_algorithm": 30,
+    "scalar_guide_weights": [0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666],
+    "ecological_compatibility": {
+      "alpha_performance": 0.3333333333333333,
+      "beta_thermal": 0.3333333333333333,
+      "gamma_carbon": 0.3333333333333333
+    },
+    "dependency_threshold": 0.5,
+    "dependency_strength": 0.25,
+    "billing_mode": "allocated_gpu_hours",
+    "seeds": [104729, 104743, 104759, 104761, 104773, 104779, 104789, 104801, 104803, 104827, 104831, 104849, 104851, 104869, 104879, 104891, 104911, 104917, 104933, 104947, 104953, 104959, 104971, 104987, 104999, 105019, 105023, 105031, 105037, 105071]
+  },
+  "sensitivity": {
+    "guide_weight_profiles": {
+      "equal": [0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666, 0.16666666666666666],
+      "performance_emphasis": [0.25, 0.125, 0.125, 0.25, 0.125, 0.125],
+      "sustainability_emphasis": [0.125, 0.25, 0.25, 0.125, 0.125, 0.125]
+    },
+    "ecological_weight_profiles": {
+      "equal": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333],
+      "performance_emphasis": [0.5, 0.25, 0.25],
+      "carbon_emphasis": [0.25, 0.25, 0.5]
+    },
+    "dependency_thresholds": [0.3, 0.5, 0.7],
+    "dependency_strengths": [0.1, 0.25, 0.5]
+  },
+  "hypervolume": {
+    "reference_rule": "For each dataset/scenario, normalize the six minimization objectives using pooled finite objective values from all algorithms and all pre-registered seeds, then use reference point [1.1,1.1,1.1,1.1,1.1,1.1]. The same pooled min/max transform and reference point are applied to every algorithm in that scenario.",
+    "sobol_samples_power": 18,
+    "scramble_seed": 20261110
+  },
+  "unresolved_before_final_runs": [
+    "trace sampling windows and sample sizes",
+    "Google-v3 GPU-demand reconstruction policy",
+    "Azure Functions CPU/GPU/memory/bandwidth reconstruction policy",
+    "Kubernetes benchmark source or synthetic generator specification",
+    "resource inventory and resource-speed factors",
+    "idle/dynamic power values and power exponent",
+    "resource prices and reference cost",
+    "carbon-intensity source/window and carbon-class thresholds",
+    "performance-affinity construction",
+    "thermal-headroom construction",
+    "dependency-matrix construction"
+  ]
+}
