@@ -78,6 +78,7 @@ class ConstraintReport:
     binary_assignment_ok: bool
     exactly_one_assignment_ok: bool
     gpu_capacity_ok: bool
+    cpu_capacity_ok: bool
     memory_capacity_ok: bool
     carbon_threshold_ok: bool
     violations: tuple[str,...]
