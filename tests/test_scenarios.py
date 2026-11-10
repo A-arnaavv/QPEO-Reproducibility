@@ -5,7 +5,7 @@ import numpy as np
 
 from qpeo.carbon import CarbonReplay
 from qpeo.resource_environment import load_resource_environment
-from qpeo.scenarios import build_alibaba_gpu_v2023_scenario
+from qpeo.scenarios import build_alibaba_gpu_v2023_scenario, build_elasticflow_itp_scenario
 
 def test_alibaba_scenario_fixture(tmp_path: Path):
     snap=tmp_path/'ali.csv'
@@ -55,3 +55,29 @@ def test_locked_alibaba_snapshot_matches_protocol():
     assert b.service_time_hours.shape==(64,7)
     assert all(w.gpu_demand<=1.0 for w in b.workloads)
     assert all(w.memory_demand<=64.0 for w in b.workloads)
+
+
+def test_locked_elasticflow_snapshot_matches_protocol():
+    root=Path(__file__).parents[1]
+    env=load_resource_environment(root/'configs'/'resource_environment_v1.json')
+    t0=datetime(2026,1,5,tzinfo=timezone.utc)
+    names=tuple(slot.name for slot in env.slots)
+    replay=CarbonReplay(
+        (t0,t0+timedelta(hours=1)),names,
+        np.array([[100,120,140,160,180,200,220],[110,130,150,170,190,210,230]],float),
+        'fixture',t0,t0+timedelta(hours=1),
+    )
+    b=build_elasticflow_itp_scenario(
+        root/'data'/'elasticflow_cluster08_single_gpu.csv',
+        root/'configs'/'trace_elasticflow_itp.json',
+        env,replay,size=64,
+    )
+    assert len(b.task_ids)==64
+    assert b.task_ids[0]=='fd68fa2d-ed9f-6fe1-0a85-877c7b6de8da'
+    assert b.task_ids[-1]=='42dfd273-4486-8e16-9a12-9f4ce099e4b5'
+    assert b.service_time_hours.shape==(64,7)
+    assert all(w.gpu_demand==1.0 for w in b.workloads)
+    assert all(w.cpu_demand==0.0 for w in b.workloads)
+    assert all(w.memory_demand==0.0 for w in b.workloads)
+    classes={w.carbon_class for w in b.workloads}
+    assert classes
