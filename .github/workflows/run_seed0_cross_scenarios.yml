@@ -1,0 +1,110 @@
+name: seed0-cross-scenario-final
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/run_seed0_cross_scenarios.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        scenario:
+          - microsoft_elasticflow_itp_cluster08
+          - helios_earth
+          - alibaba_spot_gpu_2026_a100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run locked seed-0 final shard
+        id: shard
+        continue-on-error: true
+        run: |
+          python scripts/run_final_experiment_shard.py \
+            --scenario "${{ matrix.scenario }}" \
+            --seed-index 0 \
+            --output-dir results/raw \
+            --force
+      - name: Locate valid shard
+        id: locate
+        if: always()
+        shell: bash
+        run: |
+          f=$(find results/raw -maxdepth 1 -name "${{ matrix.scenario }}__seed00_104729__final.json" -print -quit 2>/dev/null || true)
+          if [ -n "$f" ]; then echo "file=$f" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/upload-artifact@v4
+        if: steps.locate.outputs.file != ''
+        with:
+          name: seed0-${{ matrix.scenario }}
+          path: ${{ steps.locate.outputs.file }}
+          retention-days: 7
+
+  aggregate:
+    if: always()
+    needs: run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: seed0-*
+          path: /tmp/seed0
+          merge-multiple: true
+      - name: Validate and summarize four seed-0 scenarios
+        run: |
+          mkdir -p results/raw results
+          cp /tmp/seed0/*.json results/raw/ 2>/dev/null || true
+          python - <<'PY'
+          import csv,json,math
+          from pathlib import Path
+          scenarios=['alibaba_gpu_v2023','microsoft_elasticflow_itp_cluster08','helios_earth','alibaba_spot_gpu_2026_a100']
+          rows=[]; valid=True
+          for s in scenarios:
+              p=Path('results/raw')/f'{s}__seed00_104729__final.json'
+              if not p.exists():
+                  print('MISSING',p); valid=False; continue
+              d=json.loads(p.read_text())
+              if not d.get('final_protocol') or len(d.get('algorithms',[]))!=13:
+                  print('INVALID',p); valid=False; continue
+              for a in d['algorithms']:
+                  obj=a['guide_objectives']
+                  if len(obj)!=6 or not all(math.isfinite(float(x)) for x in obj): valid=False
+                  h=int(a.get('simulation_cache_hits',0)); m=int(a.get('simulation_cache_misses',0))
+                  rows.append({
+                    'scenario':s,'algorithm':a['algorithm'],'runtime_seconds':a['runtime_seconds'],
+                    'cache_hits':h,'cache_misses':m,'cache_hit_rate':h/(h+m) if h+m else 0,
+                    **{f'f{i+1}':obj[i] for i in range(6)}
+                  })
+          fields=['scenario','algorithm','runtime_seconds','cache_hits','cache_misses','cache_hit_rate','f1','f2','f3','f4','f5','f6']
+          with open('results/seed00_quick_summary.csv','w',newline='') as f:
+              w=csv.DictWriter(f,fieldnames=fields); w.writeheader(); w.writerows(rows)
+          Path('/tmp/seed0_valid').write_text('1' if valid and len(rows)==52 else '0')
+          print('SEED0_VALID=',valid and len(rows)==52,'rows=',len(rows))
+          PY
+      - name: Commit valid seed-0 cross-scenario results
+        run: |
+          set -e
+          if [ "$(cat /tmp/seed0_valid)" = "1" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add results/raw/*__seed00_104729__final.json results/seed00_quick_summary.csv
+            git rm .github/workflows/run_seed0_cross_scenarios.yml
+            git commit -m "Add locked seed-0 results across all four scenarios"
+            git push
+          else
+            echo "Seed-0 cross-scenario validation incomplete; not committing partial data."
+          fi
