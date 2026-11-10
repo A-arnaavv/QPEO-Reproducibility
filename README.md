@@ -92,3 +92,13 @@ stores the 178-job eligible Succeeded single/fractional-GPU pool together with t
 upstream Git blob SHA. A deterministic contiguous 64-job block is the primary
 experiment, with nested 32/128-job scalability windows. Source execution time and
 end-to-end latency are retained; no synthetic Alibaba deadline multiplier is used.
+
+
+## TRACE2 Microsoft ElasticFlow ITP
+The second real scenario uses Microsoft's public ElasticFlow/ITP traces. Cluster08 is
+selected by a pre-results rule (largest positive-duration single-GPU pool). All 12,558
+eligible raw jobs join exactly to the authors' deadline-bearing experiment trace.
+Primary evaluation uses a deterministic contiguous 64-job window with nested 32/128
+scalability windows. Raw arrivals, durations and GPU demand are retained; SLA
+deadlines come from the authors' published experiment trace. Unreported CPU, memory
+and bandwidth demands are explicitly zero/non-binding rather than fabricated.
