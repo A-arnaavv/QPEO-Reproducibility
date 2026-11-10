@@ -11,6 +11,49 @@ from .models import EvaluationState, ProblemInstance
 
 BillingMode = Literal["active_resource_hours", "allocated_gpu_hours"]
 
+# Per-algorithm deterministic schedule memoization. Dynamic carbon changes objective
+# evaluation and feasibility, but not service times, arrivals, capacities or the
+# resulting schedule for an already-decoded assignment.
+_SIMULATION_CACHE: dict[tuple, "SimulationResult"] = {}
+_SIMULATION_CACHE_HITS = 0
+_SIMULATION_CACHE_MISSES = 0
+
+
+def clear_simulation_cache() -> None:
+    global _SIMULATION_CACHE_HITS, _SIMULATION_CACHE_MISSES
+    _SIMULATION_CACHE.clear()
+    _SIMULATION_CACHE_HITS = 0
+    _SIMULATION_CACHE_MISSES = 0
+
+
+def simulation_cache_stats() -> dict[str, int]:
+    return {
+        "hits": int(_SIMULATION_CACHE_HITS),
+        "misses": int(_SIMULATION_CACHE_MISSES),
+        "entries": int(len(_SIMULATION_CACHE)),
+    }
+
+
+def _simulation_cache_key(
+    problem: ProblemInstance,
+    X: np.ndarray,
+    inputs: "SimulatorInputs",
+) -> tuple:
+    static_resource_signature = tuple(
+        (
+            float(r.gpu_capacity),
+            None if r.cpu_capacity is None else float(r.cpu_capacity),
+            float(r.memory_capacity),
+        )
+        for r in problem.resources
+    )
+    return (
+        id(inputs),
+        id(problem.workloads),
+        static_resource_signature,
+        np.asarray(X, dtype=np.int8).tobytes(),
+    )
+
 
 @dataclass(frozen=True)
 class PowerModel:
@@ -205,6 +248,16 @@ def simulate_fixed_assignment(
     if not report.binary_assignment_ok or not report.exactly_one_assignment_ok:
         raise ValueError("Simulator requires a binary, exactly-one assignment matrix.")
 
+    # Carbon feasibility is checked above on every call. The deterministic temporal
+    # schedule itself is carbon-independent, so an identical assignment can reuse it.
+    global _SIMULATION_CACHE_HITS, _SIMULATION_CACHE_MISSES
+    cache_key = _simulation_cache_key(problem, X, inputs)
+    cached = _SIMULATION_CACHE.get(cache_key)
+    if cached is not None:
+        _SIMULATION_CACHE_HITS += 1
+        return cached
+    _SIMULATION_CACHE_MISSES += 1
+
     assigned = np.argmax(X, axis=1)
     service = np.asarray(inputs.service_time_hours, dtype=float)
     arrivals = np.asarray([w.arrival_time for w in problem.workloads], dtype=float)
@@ -245,9 +298,11 @@ def simulate_fixed_assignment(
         occupied_gpu_hours=occupied,
         allocated_gpu_fraction_hours=allocated,
     )
-    return SimulationResult(
+    result = SimulationResult(
         state=state,start_times=starts,completion_times=completion,
         resource_active_hours=active,allocated_gpu_hours=allocated,
         energy_kwh_by_resource=energy,time_average_gpu_utilization=avg_util,
     )
+    _SIMULATION_CACHE[cache_key] = result
+    return result
 
