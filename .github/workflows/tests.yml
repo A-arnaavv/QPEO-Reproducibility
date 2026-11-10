@@ -1,9 +1,7 @@
 name: tests
-# Validates the reconstructed repository on every main-branch update.
 
+# Manual-only validation to avoid automatic GitHub Actions emails on every push.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
