@@ -1,70 +1,25 @@
 from pathlib import Path
-import csv
-from datetime import datetime, timezone
 import numpy as np
 import pytest
-from qpeo.carbon import CarbonReplay, load_neso_regional_replay, with_carbon_intensities
-from qpeo.models import CarbonClass, ProblemInstance, Resource, Workload
-from qpeo.resource_environment import load_resource_environment
+from qpeo.carbon import *
 
-def test_iteration_mapping_and_threshold_order():
-    replay=CarbonReplay(
-        timestamps_utc=tuple(datetime(2026,1,5,h,tzinfo=timezone.utc) for h in range(4)),
-        slot_names=("a","b"),
-        intensities=np.array([[100,200],[120,220],[140,240],[160,260]],float),
-        source_name="fixture",
-        window_start_utc=datetime(2026,1,5,tzinfo=timezone.utc),
-        window_end_utc=datetime(2026,1,5,3,tzinfo=timezone.utc),
-    )
-    replay.validate()
-    assert np.allclose(replay.at_iteration(0,6),[100,200])
-    assert np.allclose(replay.at_iteration(6,6),[160,260])
-    th=replay.thresholds()
-    assert th[CarbonClass.CRITICAL]<=th[CarbonClass.DEFERRED]<=th[CarbonClass.FLEXIBLE]
-    for row in replay.intensities:
-        assert np.sum(row<=th[CarbonClass.CRITICAL])>=1
-        assert np.sum(row<=th[CarbonClass.DEFERRED])>=min(3,replay.resources)
-        assert np.sum(row<=th[CarbonClass.FLEXIBLE])==replay.resources
+def test_policy():
+    p, raw = load_carbon_policy(Path(__file__).parents[1]/"configs"/"carbon_benchmark.json")
+    assert p.layer_zones["cloud"]=="US-MIDA-PJM"
+    assert p.layer_zones["serverless"]=="US-CAL-CISO"
+    assert p.layer_zones["edge"]=="IN-NO"
+    q=electricity_maps_past_range_query(p,"cloud")
+    assert q["temporalGranularity"]=="hourly"
+    assert q["emissionFactorType"]=="lifecycle"
+    assert q["flowTraced"] is True
+    assert q["disableCallerLookup"] is True
 
-def test_neso_loader_filters_locked_window_and_fills_missing(tmp_path:Path):
-    cfg=Path(__file__).parents[1]/"configs"/"carbon_replay_v1.json"
-    env=load_resource_environment(Path(__file__).parents[1]/"configs"/"resource_environment_v1.json")
-    columns=["Date & Time","North Scotland Carbon Intensity Forecast","North West England Carbon Intensity Forecast","South Wales Carbon Intensity Forecast","East England Carbon Intensity Forecast","South England Carbon Intensity Forecast","London Carbon Intensity Forecast","South East England Carbon Intensity Forecast"]
-    p=tmp_path/"carbon.csv"
-    with p.open("w",newline="") as f:
-        w=csv.DictWriter(f,fieldnames=columns); w.writeheader()
-        w.writerow({c:("100" if c!="Date & Time" else "2026-01-04T23:30:00+00:00") for c in columns})
-        row={c:"200" for c in columns}; row["Date & Time"]="2026-01-05T00:00:00+00:00"; row[columns[2]]=""; w.writerow(row)
-        row={c:"220" for c in columns}; row["Date & Time"]="2026-01-05T00:30:00+00:00"; w.writerow(row)
-    replay=load_neso_regional_replay(p,cfg,expected_slot_names=[s.name for s in env.slots])
-    assert replay.rows==2
-    assert replay.intensities.shape==(2,7)
-    assert replay.intensities[0,1]==pytest.approx(220.0)
-
-def test_with_carbon_intensities_preserves_other_resource_fields():
-    p=ProblemInstance(
-        [Workload("w",1,.2,2,1,0,2,CarbonClass.FLEXIBLE)],
-        [Resource("r",1,24,300,1.1,cpu_capacity=8)],
-        {CarbonClass.CRITICAL:100,CarbonClass.DEFERRED:300,CarbonClass.FLEXIBLE:500},
-        1,
-    )
-    q=with_carbon_intensities(p,[150])
-    assert q.resources[0].carbon_intensity==pytest.approx(150)
-    assert q.resources[0].memory_capacity==pytest.approx(24)
-    assert q.resources[0].cost_per_gpu_hour==pytest.approx(1.1)
-
-
-def test_locked_neso_week_snapshot_matches_config():
-    root=Path(__file__).parents[1]
-    env=load_resource_environment(root/'configs'/'resource_environment_v1.json')
-    replay=load_neso_regional_replay(
-        root/'data'/'carbon'/'neso_regional_2026-01-05_2026-01-11.csv',
-        root/'configs'/'carbon_replay_v1.json',
-        expected_slot_names=[s.name for s in env.slots],
-    )
-    assert replay.rows==336
-    assert replay.intensities.shape==(336,7)
-    th=replay.thresholds()
-    assert th[CarbonClass.CRITICAL]==pytest.approx(192.0,abs=1e-6)
-    assert th[CarbonClass.DEFERRED]==pytest.approx(281.0,abs=1e-6)
-    assert th[CarbonClass.FLEXIBLE]==pytest.approx(391.0,abs=1e-6)
+def test_snapshot_roundtrip(tmp_path):
+    times=tuple(f"h{i}" for i in range(168))
+    s=CarbonSeries("US-MIDA-PJM",times,np.linspace(250,450,168),np.array([False]*160+[True]*8))
+    path=tmp_path/"c.csv"
+    digest=save_carbon_snapshot_csv(path,s)
+    assert len(digest)==64
+    loaded=load_carbon_snapshot_csv(path,"US-MIDA-PJM")
+    assert np.allclose(loaded.intensity_gco2eq_per_kwh,s.intensity_gco2eq_per_kwh)
+    assert estimated_fraction(loaded)==pytest.approx(8/168)
