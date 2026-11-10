@@ -121,3 +121,10 @@ A100-SXM4-80GB single-worker jobs. The pre-results 64-job primary window contain
 both HP and Spot jobs. HP jobs are SLA-constrained and critical; Spot jobs are
 best-effort, flexible, and excluded from the SLA denominator. Service times are
 scaled from the source A100 FP32 throughput to each reconstructed target resource.
+
+
+## v8 carbon-intensity benchmark
+The primary carbon benchmark is frozen before final results: Electricity Maps v4,
+hourly lifecycle and flow-traced carbon intensity, 2025-03-03 through 2025-03-10 UTC.
+Representative zones are PJM (cloud), CAISO (serverless/high-performance), and
+Northern India (edge). Final runs use saved CSV snapshots with SHA-256 checksums.
