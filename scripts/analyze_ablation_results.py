@@ -1,7 +1,7 @@
 """Strict 30-seed QPEO ablation statistics; never infer missing results.
 
 Primary QPEO/FPA rows are joined by exact scenario and seed index with
-separately executed five-operator-ablation shards. All six objectives are
+separately executed five-operator ablations and independent elitist random search. All six objectives are
 minimization objectives. Classical FPA is a secondary non-QPEO reference,
 not an ablation. Raw p-values and both Bonferroni families are reported.
 """
@@ -28,12 +28,13 @@ from scripts.run_ablation_shard import VARIANTS
 
 REF = "full_qpeo"
 SECONDARY = "classical_fpa"
-COMPARE = (*VARIANTS, SECONDARY)
+RANDOM_CONTROL = "elitist_random_search"
+COMPARE = (*VARIANTS, SECONDARY, RANDOM_CONTROL)
 ALGORITHMS = (REF, *COMPARE)
 METRICS = (*OBJECTIVES, "runtime_seconds", "simulator_calls", "archive_size")
 FAMILYWISE_ALPHA = .01
-COMPARISONS_PER_SCENARIO = len(COMPARE)*len(OBJECTIVES)  # 36
-GLOBAL_COMPARISONS = len(SCENARIOS)*COMPARISONS_PER_SCENARIO  # 144
+COMPARISONS_PER_SCENARIO = len(COMPARE)*len(OBJECTIVES)  # 42
+GLOBAL_COMPARISONS = len(SCENARIOS)*COMPARISONS_PER_SCENARIO  # 168
 
 
 def _metrics(a: dict) -> dict[str,float]:
@@ -70,10 +71,14 @@ def compute_ablation_stats(
                 raise ValueError("Unpaired seed values in the two collections")
             primary={a["algorithm"]:a for a in reference["algorithms"]}
             variant={a["variant"]:a for a in ablation["variants"]}
-            if not {"QPEO","FPA"}.issubset(primary) or set(variant)!=set(VARIANTS):
-                raise ValueError("Missing QPEO, FPA or ablation variant")
+            controls={a["variant"]:a for a in ablation.get("secondary_baselines",[])}
+            if (not {"QPEO","FPA"}.issubset(primary)
+                or set(variant)!=set(VARIANTS)
+                or set(controls)!={RANDOM_CONTROL}):
+                raise ValueError("Missing QPEO, FPA, random search or ablation variant")
             observations[REF].append(_metrics(primary["QPEO"]))
             observations[SECONDARY].append(_metrics(primary["FPA"]))
+            observations[RANDOM_CONTROL].append(_metrics(controls[RANDOM_CONTROL]))
             for name in VARIANTS:
                 observations[name].append(_metrics(variant[name]))
         for metric in METRICS:
@@ -98,7 +103,11 @@ def compute_ablation_stats(
                 paired.append({
                     "scenario":scenario,"objective":metric,
                     "reference":REF,"comparator":name,
-                    "comparator_type":("classical_reference" if name==SECONDARY else "operator_ablation"),
+                    "comparator_type":(
+                        "classical_reference" if name==SECONDARY
+                        else "random_search_reference" if name==RANDOM_CONTROL
+                        else "operator_ablation"
+                    ),
                     "n":seed_count,
                     "mean_qpeo_minus_comparator":float(np.mean(reference-other)),
                     "qpeo_better_seed_count":int(np.sum(reference<other)),
@@ -106,8 +115,8 @@ def compute_ablation_stats(
                     "ties":int(np.sum(reference==other)),
                     "wilcoxon_statistic":statistic,
                     "p_raw":p,
-                    "p_bonferroni_36":min(1.0,p*COMPARISONS_PER_SCENARIO),
-                    "p_bonferroni_144":min(1.0,p*GLOBAL_COMPARISONS),
+                    "p_bonferroni_42":min(1.0,p*COMPARISONS_PER_SCENARIO),
+                    "p_bonferroni_168":min(1.0,p*GLOBAL_COMPARISONS),
                     "cohens_dz":dz,
                 })
     return {"descriptive_statistics":descriptives,"paired_wilcoxon":paired}
@@ -156,14 +165,15 @@ def main() -> None:
         "paired_seeds_per_scenario":len(primary["seeds"]),
         "variants":list(VARIANTS),"reference":REF,
         "classical_reference":SECONDARY,
+        "random_search_reference":RANDOM_CONTROL,
         "familywise_alpha":FAMILYWISE_ALPHA,
         "wilcoxon_tests_per_scenario":COMPARISONS_PER_SCENARIO,
         "wilcoxon_tests_total":GLOBAL_COMPARISONS,
-        "correction_policy":"raw, per-scenario Bonferroni-36, and global Bonferroni-144",
+        "correction_policy":"raw, per-scenario Bonferroni-42, and global Bonferroni-168",
         "objective_direction":"all six minimized",
         "notes":[
             "no_caqc_penalty preserves hard carbon-class feasibility and Omega carbon affinity",
-            "classical_fpa is a comparator, not a QPEO component ablation",
+            "classical_fpa and elitist_random_search are comparators, not QPEO component ablations",
             "dynamic carbon means these histories are not stationary-objective convergence traces",
             "full Pareto-front objective vectors are unavailable from primary shards, so hypervolume is not reported",
         ],
