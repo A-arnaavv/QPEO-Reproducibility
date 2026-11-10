@@ -31,6 +31,7 @@ def feasible_caqc_collapse(
         threshold = float(problem.carbon_thresholds[w.carbon_class])
         mask = np.asarray([
             (w.gpu_demand <= r.gpu_capacity + 1e-12)
+            and (r.cpu_capacity is None or w.cpu_demand <= r.cpu_capacity + 1e-12)
             and (w.memory_demand <= r.memory_capacity + 1e-12)
             and (r.carbon_intensity <= threshold + 1e-12)
             for r in problem.resources
