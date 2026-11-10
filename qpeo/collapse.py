@@ -25,9 +25,6 @@ def feasible_caqc_collapse(
     ci = np.asarray([r.carbon_intensity for r in problem.resources], dtype=float)
     scores = caqc_scores(P, ci, kappa=kappa, ci_ref=ci_ref)
 
-    gpu_remaining = np.asarray([r.gpu_capacity for r in problem.resources], dtype=float)
-    mem_remaining = np.asarray([r.memory_capacity for r in problem.resources], dtype=float)
-
     individually_feasible: list[np.ndarray] = []
     difficulty: list[tuple[int, float, int]] = []
     for i, w in enumerate(problem.workloads):
@@ -52,26 +49,11 @@ def feasible_caqc_collapse(
     X = np.zeros((M, N), dtype=int)
 
     for i in order:
-        w = problem.workloads[i]
         allowed = individually_feasible[i]
         resource_order = np.argsort(-scores[i], kind="stable")
-        placed = False
-        for j in resource_order:
-            if not allowed[j]:
-                continue
-            if (
-                w.gpu_demand <= gpu_remaining[j] + 1e-12
-                and w.memory_demand <= mem_remaining[j] + 1e-12
-            ):
-                X[i, j] = 1
-                gpu_remaining[j] -= float(w.gpu_demand)
-                mem_remaining[j] -= float(w.memory_demand)
-                placed = True
-                break
-        if not placed:
-            raise NoFeasibleAssignment(
-                "Greedy CAQC repair could not construct a feasible assignment. "
-                "A feasible assignment may still exist; this is a reconstruction-rule limitation."
-            )
+        chosen = next((int(j) for j in resource_order if allowed[j]), None)
+        if chosen is None:
+            raise NoFeasibleAssignment(f"Workload {problem.workloads[i].name!r} has no feasible resource.")
+        X[i, chosen] = 1
 
     return X
