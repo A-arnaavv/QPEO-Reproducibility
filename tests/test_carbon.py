@@ -52,3 +52,19 @@ def test_with_carbon_intensities_preserves_other_resource_fields():
     assert q.resources[0].carbon_intensity==pytest.approx(150)
     assert q.resources[0].memory_capacity==pytest.approx(24)
     assert q.resources[0].cost_per_gpu_hour==pytest.approx(1.1)
+
+
+def test_locked_neso_week_snapshot_matches_config():
+    root=Path(__file__).parents[1]
+    env=load_resource_environment(root/'configs'/'resource_environment_v1.json')
+    replay=load_neso_regional_replay(
+        root/'data'/'carbon'/'neso_regional_2026-01-05_2026-01-11.csv',
+        root/'configs'/'carbon_replay_v1.json',
+        expected_slot_names=[s.name for s in env.slots],
+    )
+    assert replay.rows==336
+    assert replay.intensities.shape==(336,7)
+    th=replay.thresholds()
+    assert th[CarbonClass.CRITICAL]==pytest.approx(192.0,abs=1e-6)
+    assert th[CarbonClass.DEFERRED]==pytest.approx(281.0,abs=1e-6)
+    assert th[CarbonClass.FLEXIBLE]==pytest.approx(391.0,abs=1e-6)
