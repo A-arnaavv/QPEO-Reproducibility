@@ -115,7 +115,7 @@
     "scramble_seed": 20261110
   },
   "unresolved_before_final_runs": [
-    "trace sampling windows and sample sizes",
+    "sampling/materialization protocol for non-Alibaba datasets",
     "Google-v3 GPU-demand reconstruction policy",
     "Azure Functions CPU/GPU/memory/bandwidth reconstruction policy",
     "Kubernetes benchmark source or synthetic generator specification",
@@ -146,5 +146,32 @@
     "refresh": "one replay vector per optimizer iteration, shared across algorithms",
     "current_state_archive": "rebuild after carbon refresh to avoid stale f3/feasibility values",
     "qpeo_specific_refresh": "recompute ecological compatibility Omega because Eq. (10) includes carbon intensity"
+  },
+  "trace_scenarios": {
+    "alibaba_gpu_v2023": {
+      "status": "locked-pre-results",
+      "config": "configs/trace_alibaba_gpu_v2023.json",
+      "snapshot": "data/alibaba_gpu_v2023_eligible_succeeded.csv",
+      "upstream_blob_sha": "bd82505791c723c5b11486ef457fb338529912c0",
+      "eligible_count": 178,
+      "primary_jobs": 64,
+      "scalability_jobs": [
+        32,
+        64,
+        128
+      ],
+      "primary_window": [
+        "openb-pod-3131",
+        "openb-pod-5985"
+      ],
+      "scope": "Succeeded single/fractional-GPU jobs only; num_gpu=1 and 0<gpu_milli<=1000",
+      "deadline_rule": "source observed end-to-end time (deletion_time - creation_time)",
+      "qos_carbon_mapping": {
+        "LS": "critical",
+        "Burstable": "deferred",
+        "BE": "flexible"
+      },
+      "service_time_rule": "source observed runtime scaled by locked FP32 resource speed factors"
+    }
   }
 }
