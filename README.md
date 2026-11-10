@@ -70,3 +70,10 @@ pool before final experiments. NVIDIA-published memory, maximum power, and FP32
 throughput values are used for the 4090/A6000/A5000/Jetson Orin hardware classes.
 FP32 is only a reproducible service-speed proxy; normalized cost indices remain
 explicit reconstruction assumptions and are accompanied by sensitivity profiles.
+
+
+## v8 carbon replay
+`configs/carbon_replay_v1.json` pre-registers a fixed one-week NESO regional carbon
+replay and deterministic resource-to-region mapping. Carbon thresholds are derived
+from replay tertiles (33rd/67th percentile plus a flexible maximum) rather than tuned
+against algorithm results.
