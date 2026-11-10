@@ -242,7 +242,7 @@
     }
   },
   "final_run_harness": {
-    "status": "ready-pending-ci-smoke",
+    "status": "smoke-passed-ready-final-execution",
     "shard_runner": "scripts/run_final_experiment_shard.py",
     "aggregator": "scripts/aggregate_final_results.py",
     "unit_of_checkpoint": "one scenario x one locked seed; contains all 13 algorithms",
@@ -251,6 +251,15 @@
     "primary_size": 64,
     "population_size": 50,
     "max_iterations": 500,
-    "seeds": 30
+    "seeds": 30,
+    "smoke_validation": {
+      "scenario": "alibaba_gpu_v2023",
+      "size": 32,
+      "population_size": 6,
+      "max_iterations": 2,
+      "algorithms": 13,
+      "result": "passed",
+      "validated_commit": "f81299a0e132a90076f14c275bf140c4b9ff9d54"
+    }
   }
 }
