@@ -62,3 +62,11 @@ remain explicitly unresolved and must be fixed before the final runs.
 Every optimizer now records the six raw guide-objective values at initialization and
 after every iteration (T+1 rows). Convergence-to-90% analyses must use these raw,
 consistently scaled histories rather than the changing within-population scalar score.
+
+
+## v7 resource environment
+`configs/resource_environment_v1.json` locks the reconstructed heterogeneous resource
+pool before final experiments. NVIDIA-published memory, maximum power, and FP32
+throughput values are used for the 4090/A6000/A5000/Jetson Orin hardware classes.
+FP32 is only a reproducible service-speed proxy; normalized cost indices remain
+explicit reconstruction assumptions and are accompanied by sensitivity profiles.
