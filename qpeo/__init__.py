@@ -45,3 +45,8 @@ from .statistics import (
 
 from .protocol import PrimaryProtocol, load_protocol, pooled_normalization_transform, normalize_with_transform
 __all__ += ["PrimaryProtocol", "load_protocol", "pooled_normalization_transform", "normalize_with_transform"]
+
+from .resource_environment import (
+    HardwareClassSpec, ResourceSlotSpec, ResourceEnvironment, load_resource_environment,
+)
+__all__ += ["HardwareClassSpec", "ResourceSlotSpec", "ResourceEnvironment", "load_resource_environment"]
