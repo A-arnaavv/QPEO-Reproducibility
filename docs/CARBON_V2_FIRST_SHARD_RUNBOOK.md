@@ -1,6 +1,6 @@
 # QPEO Carbon-v2 — first corrected full-size shard
 
-**Status: prepared, not executed.** The corrected full-study campaign remains at **0 of 120 shards**. The most recent local repository test suite passed **112 of 112 tests**, but the runtime has NumPy 2.3.5, SciPy 1.17.0 and pytest 9.0.2 rather than the exact required 2.4.6, 1.17.1 and 9.2.0. No matching installation wheels are available here, and this runtime cannot fetch them. **Do not call any unpinned run publication-grade.**
+**Status: prepared, not executed.** The corrected full-study campaign remains at **0 of 120 shards**. The most recent local repository test suite passed **113 of 113 tests**, but the runtime has NumPy 2.3.5, SciPy 1.17.0 and pytest 9.0.2 rather than the exact required 2.4.6, 1.17.1 and 9.2.0. No matching installation wheels are available here, and this runtime cannot fetch them. **Do not call any unpinned run publication-grade.**
 
 ## What is now available
 
@@ -47,3 +47,12 @@ Upload the single JSON shard and `campaign_audit.json`, or a ZIP containing both
 ## Remaining scientific gates
 
 The repeated 168-hour UK carbon forecast is a counterfactual modeling assumption, not later-week measured grid intensity; resource carbon-class eligibility uses a fixed forecast-week mean and does not guarantee an instantaneous emissions limit. Even after one full shard passes, the protocol still requires coauthor review, complete corrected 120-shard cohort, paired statistics, and regenerated figures/tables before manuscript claims can be updated.
+
+
+## Latest local readiness check (12 November 2026)
+
+- The safe first-shard launcher now generates a **deep** collection audit without `--fast-audit`, so it independently replays the newly completed shard when run. A regression test was added.
+- Full local repository regression suite (against the uploaded source snapshot plus these launcher changes): **113/113 passed**.
+- The local test container has Python 3.13.5, but NumPy 2.3.5, SciPy 1.17.0, pytest 9.0.2. Exact locked versions are NumPy 2.4.6, SciPy 1.17.1, pytest 9.2.0. Required wheels were unavailable from the local cache and network-backed install is not available here; no full-size shard was run.
+- A read-only *empty-cohort* audit confirmed **0 valid, 120 missing, 0 invalid**, as expected before running a full shard. The empty-cohort audit is not evidence that any experiment has completed.
+- The next action remains setting up the pinned Python 3.13 environment on an internet-connected computer (`bash scripts/carbon_v2_first_shard_local.sh --install`), followed by one explicitly approved `--execute-one` full-size experiment. The full 120-shard study and manuscript results remain pending.
