@@ -37,3 +37,13 @@ def test_bro_shapes():
     out=biodiversity_restore(pop,pop[0],np.array([False,True,False]),rng)
     assert out.shape==pop.shape
     assert np.all((out>=0)&(out<=np.pi/2))
+
+
+def test_ecological_compatibility_all_zero_forecast_is_finite():
+    omega=ecological_compatibility(
+        np.array([[0.5, 0.8]]), np.array([1.0, 0.6]), np.array([0.0, 0.0]),
+        alpha=1/3, beta=1/3, gamma=1/3,
+    )
+    assert omega.shape == (1, 2)
+    assert np.all(np.isfinite(omega))
+    assert np.allclose(omega, np.array([[0.5, 0.8]])/3 + np.array([[1., .6]])/3 + 1/3)
