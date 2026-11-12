@@ -1,0 +1,58 @@
+{
+  "campaign_id": "qpeo-carbon-v2-candidate-full-2026-11-12",
+  "status": "candidate-protocol-not-yet-approved-for-publication",
+  "purpose": "Prepare a complete, clean and independently auditable corrected primary comparison; NO campaign runs launched by creating this file",
+  "reuses_legacy_predeclared_seeds_and_budgets_from": "configs/reconstruction_protocol.json",
+  "changes_since_legacy_study": [
+    "Concurrent aggregate CPU capacity is enforced in addition to GPU and memory",
+    "Carbon objective is modeled execution-time-integrated forecast intensity rather than optimizer-endpoint intensity",
+    "Fixed arithmetic forecast-week region means determine offline planning/eligibility, rather than changing forecast signal by optimizer iteration",
+    "Forecast week is repeated cyclically beyond the observed 168 hours as an explicit counterfactual model assumption",
+    "Additional per-run final assignment, schedule and modeled carbon mass are persisted"
+  ],
+  "scenarios": [
+    "alibaba_gpu_v2023",
+    "microsoft_elasticflow_itp_cluster08",
+    "helios_earth",
+    "alibaba_spot_gpu_2026_a100"
+  ],
+  "workloads_per_scenario": 64,
+  "algorithms": 13,
+  "seed_count": 30,
+  "population_size": 50,
+  "max_iterations": 500,
+  "shards_expected": 120,
+  "algorithm_records_expected": 1560,
+  "run_command": "python scripts/run_final_experiment_shard.py --scenario <scenario> --seed-index <index> --population-size 50 --max-iterations 500 --carbon-time-accounting repeat --output-dir results/carbon_v2_campaign/<source_sha12>",
+  "shard_tag": "test-P50-T500-N64-carbon-time-v2-repeat-fixedmean",
+  "provenance": "Each JSON shard must record exact full Git SHA, clean tracked checkout, versions and protocol-file SHA256. The audit must reject mixed SHA or changed protocol.",
+  "analysis_policy": {
+    "requires_complete_independent_validation": true,
+    "primary_objectives": [
+      "negative_gpu_utilization", "modeled_gpu_energy_kwh", "modeled_energy_weighted_carbon_intensity_gco2e_per_kwh", "makespan_hours", "sla_violation_percent", "normalized_relative_cost"
+    ],
+    "secondary_descriptive_only": ["modeled_total_gpu_carbon_gco2e"],
+    "paired_seed_comparisons": true,
+    "familywise_wilcoxon_tests": 288,
+    "familywise_alpha": 0.01,
+    "no_imputation_or_selective_baseline_exclusion": true
+  },
+  "limitations": [
+    "Not actual data-centre electricity or measured carbon emissions",
+    "UK regional forecasts are assigned to logical cloud-edge resource slots counterfactually",
+    "Repeating the observed forecast week is synthetic extrapolation; it is not observed later-week intensity",
+    "Fixed full-week intensity is assumed available to the offline planner; this is not an online causal forecast benchmark",
+    "Host power and inactive idle GPU power are not modeled",
+    "A fixed region-mean planning carbon class threshold is not a per-timestep constraint guarantee",
+    "Changes to simulator and objectives make old tables/figures noncomparable"
+  ],
+  "gates_before_publication": [
+    "Obtain coauthor approval of the revised offline carbon policy and limitations",
+    "Verify pinned dependencies and source snapshot are reproducible",
+    "Run complete 120-shard cohort with no missing/invalid shards",
+    "Independently replay 13 final schedules per shard to verify CPU/GPU/memory feasibility and energy/carbon parity",
+    "Compute paired statistical results only from the complete corrected cohort",
+    "Regenerate every affected table/figure and revise claim language",
+    "Audit sensitivities/ablation separately rather than inventing results"
+  ]
+}
