@@ -105,6 +105,6 @@ echo "Starting ONE full-size shard: Microsoft ElasticFlow, seed index 0, P=50, T
   --scenario microsoft_elasticflow_itp_cluster08 --seed-index 0 --execute
 
 out="results/carbon_v2_campaign/${revision:0:12}"
-"$venv/bin/python" scripts/audit_carbon_v2_campaign.py --input-dir "$out" --fast-audit
+"$venv/bin/python" scripts/audit_carbon_v2_campaign.py --input-dir "$out"
 printf 'First-shard output directory: %s/%s\n' "$root" "$out"
 echo 'IMPORTANT: This does not complete the 120-shard study or justify manuscript claims.'
