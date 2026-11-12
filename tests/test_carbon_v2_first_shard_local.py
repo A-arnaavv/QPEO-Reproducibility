@@ -30,3 +30,9 @@ def test_shell_launcher_refuses_missing_pinned_environment(tmp_path):
         assert result.returncode == 3
         assert "Pinned environment missing" in result.stderr
         assert "EXECUTING" not in (result.stdout + result.stderr)
+
+
+def test_shell_launcher_requests_deep_first_shard_audit():
+    source = SCRIPT.read_text(encoding="utf-8")
+    assert "scripts/audit_carbon_v2_campaign.py --input-dir" in source
+    assert "--fast-audit" not in source
