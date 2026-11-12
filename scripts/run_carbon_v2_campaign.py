@@ -83,7 +83,7 @@ def run_one(scenario: str, seed_index: int, *, execute: bool) -> dict:
         raise SystemExit("REFUSING: must run from the carbon-accounting-v2-validation branch")
     source_changes = _git(
         "status", "--porcelain", "--untracked-files=all", "--",
-        "qpeo", "scripts", "configs", "tests", "requirements.txt", "pyproject.toml",
+        "qpeo", "scripts", "configs", "tests", "data", "requirements.txt", "pyproject.toml",
     )
     if source_changes:
         raise SystemExit(
