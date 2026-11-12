@@ -65,3 +65,20 @@ def test_carbon_feasibility_is_rechecked_before_cache_hit():
         simulate_fixed_assignment(infeasible,X,inputs)
     # The infeasible call fails before it is counted as a cache hit.
     assert simulation_cache_stats()["hits"]==0
+
+
+def test_separate_transient_simulation_inputs_never_alias_cache():
+    problem,inputs,X=_fixture()
+    clear_simulation_cache()
+    with_active=SimulatorInputs(
+        inputs.service_time_hours, inputs.power_model, "active_resource_hours",
+    )
+    a=simulate_fixed_assignment(problem,X,with_active)
+    # Two separately allocated temporary SimulatorInputs have different billing
+    # conventions. The cache must not reuse a result when Python recycles IDs.
+    b=simulate_fixed_assignment(problem,X,SimulatorInputs(
+        inputs.service_time_hours,inputs.power_model,"allocated_gpu_hours",
+    ))
+    assert simulation_cache_stats()["misses"] == 2
+    assert a.state.occupied_gpu_hours[0] == pytest.approx(1.5)
+    assert b.state.occupied_gpu_hours[0] == pytest.approx(1.0)
