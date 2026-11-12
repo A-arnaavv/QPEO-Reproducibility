@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Sequence
 
 import numpy as np
 
 from .archive import ParetoArchive
+from .carbon_accounting import account_simulation_result
 from .decoder import feasible_score_decode
 from .evaluator import evaluate_objectives, normalize_population_objectives, scalar_fitness
 from .models import ObjectiveVector, ProblemInstance
@@ -42,6 +43,14 @@ def evaluate_scores(
     X = feasible_score_decode(problem, scores)
     sim = simulate_fixed_assignment(problem, X, simulator_inputs)
     obj = evaluate_objectives(problem, X, sim.state)
+    if simulator_inputs.carbon_time_series is not None:
+        accounting = account_simulation_result(
+            problem, X, simulator_inputs, sim, simulator_inputs.carbon_time_series
+        )
+        obj = replace(
+            obj,
+            f3_energy_weighted_carbon_intensity=accounting.energy_weighted_intensity_g_per_kwh,
+        )
     return X, obj
 
 
