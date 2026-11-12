@@ -1,0 +1,38 @@
+{
+  "protocol_id": "qpeo-carbon-v2-provisional-pilot",
+  "status": "provisional-validation-only-NOT-primary-study",
+  "date": "2026-11-12",
+  "base_repository_branch": "carbon-accounting-v2-validation",
+  "enabled_via_cli": "--carbon-time-accounting repeat",
+  "forecasts": {
+    "source_file": "data/carbon/neso_regional_2026-01-05_2026-01-11.csv",
+    "config_file": "configs/carbon_replay_v1.json",
+    "regions": 7,
+    "rows": 336,
+    "step_hours": 0.5,
+    "coverage_hours": 168,
+    "first_selected_workload_arrival_aligned_to_first_forecast_row": true,
+    "coverage_policy": "repeat",
+    "interpretation": "repeat the 168-hour forecast cyclically for every one of four simulated scheduling scenarios, not real/observed subsequent-week carbon intensity"
+  },
+  "applies_to_scenarios": [
+    "alibaba_gpu_v2023",
+    "microsoft_elasticflow_itp_cluster08",
+    "helios_earth",
+    "alibaba_spot_gpu_2026_a100"
+  ],
+  "selection_rationale": "Alibaba v2023 mean modeled makespan is approximately 308 hours, exceeding the 168-hour frozen forecast. A consistent explicit periodic replay is a controlled counterfactual assumption across all scenarios.",
+  "carbon_objective": "modeled GPU-side time-integrated energy-weighted forecast intensity in gCO2e/kWh",
+  "additional_reporting_metric": "modelled total carbon exposure grams CO2e from energy x time-varying intensity",
+  "remaining_limitations": [
+    "two new 13-optimizer integration smoke tests not yet executed",
+    "no complete 13 algorithm x 30 seeds x 4 scenarios carbon-v2 experiment results",
+    "constraint/decoder carbon feasibility remains optimizer-iteration-indexed while f3 is execution-time-aligned",
+    "simulator does not enforce simultaneous aggregate CPU capacity",
+    "original traces are not historical measurements of UK regional electricity use",
+    "workload-activity-based GPU-side power excludes inactive idle and host power",
+    "EBWS remains unexercised because recorded dependencies are absent",
+    "selected forecast period may not be representative of different seasonal intensity"
+  ],
+  "publication_gate": "Requires coauthor approval, branch integration tests, real-trace small pilot, model consistency check, full rerun, independent analysis, revised tables and narrative."
+}
