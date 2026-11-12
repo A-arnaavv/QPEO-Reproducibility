@@ -1,0 +1,59 @@
+# Carbon-accounting v2 — isolated validation branch
+
+**Status, 12 November 2026:** The corrected integration code is committed. **11 local pure-function/adapter tests passed**; two additional all-algorithm integration smoke tests were committed but have **not yet been executed**. The 13-algorithm 30-seed primary experiment has not been rerun.
+
+The original main branch and its locked v1 experimental results remain unchanged.
+
+## Diagnosis
+
+In v1, the reported objective f3 is the modeled energy by resource weighted by the grid carbon-intensity forecast **at the final optimizer iteration**. The North Scotland terminal forecast has intensity zero, which explains several zero-intensity results with positive energy. It does not represent energy-associated carbon exposure over the jobs' execution intervals.
+
+## Implemented correction (opt-in only)
+
+- qpeo/carbon_accounting.py implements CarbonTimeSeries, integrate_time_aligned_carbon and account_simulation_result.
+- Actual simulated job start/finish times, assigned resources and GPU fractions determine an instantaneous resource-utilization profile.
+- Active GPU power is integrated against the appropriate forecast intervals, producing modeled total grams CO2e and energy-weighted carbon intensity.
+- Forecast rows are interpreted as piecewise constant 30-minute intervals. The first selected workload arrival is aligned with the first NESO forecast row. This is a **counterfactual modeling alignment**, not a claim that the workloads ran in the UK in January 2026.
+- The default STRICT coverage policy rejects any workload outside the frozen 168-hour forecast. The optional REPEAT policy cycles the week and is explicitly a **synthetic sensitivity assumption**, not observed later weeks.
+- Per-resource energy is checked against the original simulator's calculated power/energy before accepting a result.
+- qpeo/simulator.py adds optional carbon_time_series to SimulatorInputs; both QPEO and all baseline evaluators use the new f3 only when it is supplied. Otherwise v1 behavior is retained unchanged.
+- scripts/run_final_experiment_shard.py adds the option --carbon-time-accounting strict|repeat and forces test-tagged output filenames. These outputs also retain guide assignments, start/end times, modeled carbon grams, and intensity for independent inspection. No locked __final.json artifacts are overwritten.
+
+## Formula and units
+
+For resource j, power P_j(u_j(t)) is in kW, duration t in hours, and forecast carbon intensity CI_j(t) in gCO2e/kWh:
+
+    E_j = integral_active P_j(u_j(t)) dt              (kWh)
+    C_j = integral_active P_j(u_j(t)) CI_j(t) dt      (gCO2e)
+    C_total = sum_j C_j
+    f3 = C_total / sum_j E_j                          (gCO2e/kWh)
+
+The primary GPU-only power model excludes host and inactive idle power. Values are **forecast-based modeled exposure**, not measured physical emissions.
+
+## Tests actually performed
+
+The local file tests/test_time_aligned_carbon_accounting.py passed **11 out of 11** tests, including overlapping fractional workloads, terminal zero forecast, strict vs repeat coverage for a 308 h simulated workload, multi-resource energy weighting, capacity failures, nonzero active-only idle power, energy parity, and forecast time origin. These tests use analytical synthetic data and run without requiring an expensive experimental campaign.
+
+tests/test_time_aligned_carbon_full_suite.py contains two **additional unexecuted** integration tests intended to exercise v1 and v2 semantics for all 13 algorithms at population 4, iterations 2. They are not counted among the 11 passed tests.
+
+## Local pilot commands (NOT run in this audit)
+
+Unit and small full-suite test:
+
+    python -m pytest -q tests/test_time_aligned_carbon_accounting.py tests/test_time_aligned_carbon_full_suite.py
+
+Small Microsoft pilot with 13 algorithms, one seed, population 4, two iterations, strict coverage:
+
+    python scripts/run_final_experiment_shard.py --scenario microsoft_elasticflow_itp_cluster08 --seed-index 0 --population-size 4 --max-iterations 2 --carbon-time-accounting strict --output-dir results/carbon_v2_pilot
+
+This generates a test-tagged carbon-v2 file, not a new primary result.
+
+## Publication gates still unresolved
+
+1. Execute the two new end-to-end integration tests and a small real-trace pilot in a local or otherwise explicitly approved environment. Do not automatically dispatch GitHub Actions.
+2. The frozen NESO week has only **168 hours** of coverage; the Alibaba v2023 main scenario is about **308 hours** long. Strict mode must reject that mismatch. Either obtain a sufficiently long actual forecast or explicitly preregister the repeat-policy as a counterfactual sensitivity test.
+3. The decoder still enforces carbon thresholds using the **optimizer-iteration-indexed** forecast, whereas the new objective uses the **simulated job-execution-time-indexed** forecast. The hybrid is disclosed; a fully time-consistent carbon-feasibility policy requires another design and code review.
+4. Aggregate simultaneous CPU demand is not constrained by the current simulator, and EBWS has no dependency edges in the four primary traces. The carbon patch does not resolve these separate scientific issues.
+5. After validation and a locked v2 protocol, the full 13-algorithm study must be rerun, then all objectives, statistics, figures and manuscript claims regenerated. Updating only Table 6 would be misleading because changing f3 changes the optimizer's solution choices.
+
+**Do not insert the v1 carbon-intensity numbers into a manuscript Table 6 labelled as time-aligned carbon exposure or emissions.**
