@@ -11,9 +11,12 @@ all concurrent resource capacities, modeled energy, and time-aligned carbon.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
+import re
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +46,29 @@ def validate_pilot(path: str | Path) -> dict:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if payload.get("final_protocol") is not False:
         raise AssertionError("Expected an explicitly test-tagged, non-primary shard")
+    provenance=payload.get("execution_provenance")
+    if not isinstance(provenance, dict):
+        raise AssertionError("Pilot is missing execution provenance")
+    sha=provenance.get("source_git_sha")
+    if not isinstance(sha, str) or re.fullmatch(r"[0-9a-f]{40}", sha) is None:
+        raise AssertionError("Pilot source revision must be a full Git commit SHA")
+    if payload.get("git_sha") != sha:
+        raise AssertionError("Git SHA in payload does not match provenance")
+    if provenance.get("source_has_tracked_changes") is not False:
+        raise AssertionError("Pilot was not produced from a clean tracked checkout")
+    try:
+        current_sha=subprocess.run(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+            capture_output=True, text=True, check=True, timeout=10,
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise AssertionError("Cannot verify local Git revision") from exc
+    if current_sha != sha:
+        raise AssertionError("Pilot uses a different source revision than this validator")
+    protocol=ROOT/"configs"/"carbon_v2_provisional_pilot_protocol.json"
+    actual_hash=hashlib.sha256(protocol.read_bytes()).hexdigest()
+    if provenance.get("provisional_protocol_sha256") != actual_hash:
+        raise AssertionError("Pilot was not produced using the current documented protocol")
     version = payload.get("carbon_time_accounting")
     if not isinstance(version, dict) or version.get("version") != "v2":
         raise AssertionError("Not a carbon-v2 output")
