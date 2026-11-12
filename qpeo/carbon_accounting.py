@@ -11,6 +11,7 @@ which is a counterfactual sensitivity assumption, not a claim of observed data.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Literal, Sequence
 import math
 
@@ -26,6 +27,21 @@ class CarbonTimeSeries:
     step_hours: float  # duration of one forecast row, e.g. 0.5 h
     forecast_start_hours: float = 0.0  # relative to first selected job arrival
     coverage_policy: CoveragePolicy = "strict"
+
+    def __post_init__(self) -> None:
+        # Immutable copy permits reusing the cumulative table across candidates.
+        values = np.array(self.intensities_g_per_kwh, dtype=float, copy=True)
+        values.setflags(write=False)
+        object.__setattr__(self, "intensities_g_per_kwh", values)
+
+    @cached_property
+    def cumulative_intensity_hours(self) -> np.ndarray:
+        values = self.intensities_g_per_kwh
+        self.validate(values.shape[1] if values.ndim == 2 else 0)
+        prefix = np.vstack((np.zeros((1, values.shape[1])),
+                            np.cumsum(values * self.step_hours, axis=0)))
+        prefix.setflags(write=False)
+        return prefix
 
     def validate(self, n_resources: int) -> None:
         ci = np.asarray(self.intensities_g_per_kwh, dtype=float)
@@ -90,7 +106,7 @@ def integrate_time_aligned_carbon(
     step = float(forecast.step_hours)
     period = float(forecast.coverage_hours)
     origin = float(forecast.forecast_start_hours)
-    prefix = np.vstack((np.zeros((1, n)), np.cumsum(intensity * step, axis=0)))
+    prefix = forecast.cumulative_intensity_hours
 
     def carbon_area(time_hour: float, resource: int) -> float:
         """Integral of the forecast intensity from origin to time_hour, in g h/kWh."""
