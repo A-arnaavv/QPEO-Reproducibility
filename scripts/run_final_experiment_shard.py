@@ -102,7 +102,10 @@ def _local_provenance() -> dict:
             return None
 
     revision=os.environ.get("GITHUB_SHA") or git("rev-parse", "HEAD")
-    dirty=git("status", "--porcelain", "--untracked-files=no")
+    # Include untracked code/config/tests: a ZIP-based local Git snapshot may
+    # otherwise claim an exact source SHA while executing untracked Python files.
+    dirty=git("status", "--porcelain", "--untracked-files=all", "--",
+              "qpeo", "scripts", "configs", "tests", "requirements.txt", "pyproject.toml")
     protocol_path=ROOT/"configs"/"carbon_v2_provisional_pilot_protocol.json"
     protocol_hash=(hashlib.sha256(protocol_path.read_bytes()).hexdigest()
                    if protocol_path.exists() else None)
