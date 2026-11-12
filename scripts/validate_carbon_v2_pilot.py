@@ -23,6 +23,8 @@ if str(ROOT) not in sys.path:
 import numpy as np
 
 from qpeo.carbon_accounting import CarbonTimeSeries, integrate_time_aligned_carbon
+from qpeo.carbon import with_carbon_intensities
+from qpeo.simulator import simulate_fixed_assignment, clear_simulation_cache
 from scripts.run_final_experiment_shard import build_scenario
 
 EXPECTED = (
@@ -57,6 +59,15 @@ def validate_pilot(path: str | Path) -> dict:
         raise AssertionError("Missing/duplicated/unknown algorithms")
 
     bundle, env, replay = build_scenario(payload["scenario"], int(payload["size"]))
+    plan = version.get("planning_signal")
+    if plan != "fixed full-week regional mean intensity":
+        raise AssertionError("Pilot is not using the locked stationary planning signal")
+    planning_ci = np.mean(replay.intensities, axis=0)
+    np.testing.assert_allclose(
+        np.asarray(version["planning_carbon_intensities_g_per_kwh"], dtype=float),
+        planning_ci, rtol=1e-12, atol=1e-12,
+    )
+    planning_problem = with_carbon_intensities(bundle.problem, planning_ci)
     m, n = len(bundle.problem.workloads), len(bundle.problem.resources)
     if int(payload["carbon_rows"]) != replay.rows:
         raise AssertionError("Forecast row count differs from saved pilot")
@@ -106,6 +117,12 @@ def validate_pilot(path: str | Path) -> dict:
             if gpu[i] > cap[j] + 1e-9 or cpu[i] > cpu_cap[j] + 1e-9 or memory[i] > mem_cap[j] + 1e-9:
                 raise AssertionError(f"{name} job {i}: individual resource-capacity violation")
 
+        X = np.zeros((m, n), dtype=int)
+        X[np.arange(m), assignment] = 1
+        clear_simulation_cache()
+        reconstructed = simulate_fixed_assignment(planning_problem, X, inputs)
+        np.testing.assert_allclose(reconstructed.start_times, start, rtol=1e-9, atol=1e-9)
+        np.testing.assert_allclose(reconstructed.completion_times, finish, rtol=1e-9, atol=1e-9)
         intervals_by_resource: list[list[tuple[float, float, float]]] = [[] for _ in range(n)]
         for j in range(n):
             indices = np.flatnonzero(assignment == j)
@@ -149,6 +166,7 @@ def validate_pilot(path: str | Path) -> dict:
             "intensity_gco2e_per_kwh": carbon.energy_weighted_intensity_g_per_kwh,
             "capacity_check": "passed",
             "energy_carbon_recalculation": "passed",
+            "reconstructed_schedule_and_planning_constraints": "passed",
         })
 
     return {
