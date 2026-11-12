@@ -110,6 +110,22 @@ def validate_campaign_shard(path: Path, scenario: str, index: int, seed: int,
         raise ValueError("Invalid full source Git SHA")
     if prov.get("source_has_tracked_changes") is not False:
         raise ValueError("Run used a dirty tracked checkout")
+    # A successful read-only deep replay is not proof the original run used
+    # the predeclared software environment. Check its recorded provenance.
+    req = {}
+    for line in (ROOT / "requirements.txt").read_text().splitlines():
+        if "==" in line:
+            name, version = line.split("==", 1)
+            req[name.strip()] = version.strip()
+    python_ver = prov.get("python_version")
+    if not isinstance(python_ver, str) or not python_ver.startswith("3.13."):
+        raise ValueError("Full campaign was not executed under Python 3.13.x")
+    for pkg in ("numpy", "scipy", "pytest"):
+        if prov.get(f"{pkg}_version") != req[pkg]:
+            raise ValueError(
+                f"Full campaign used an unpinned {pkg} version: "
+                f"{prov.get(f'{pkg}_version')!r} instead of {req[pkg]!r}"
+            )
     if (path.parent.name != sha[:12]):
         raise ValueError("Shard must live in a source-revision-named directory")
     if deep:
