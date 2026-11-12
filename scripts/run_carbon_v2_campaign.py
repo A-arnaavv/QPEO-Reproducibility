@@ -19,8 +19,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.audit_final_shards import SCENARIOS
-from scripts.audit_carbon_v2_campaign import TAG, _read_protocol, expected_filename
-from scripts.validate_carbon_v2_pilot import validate_pilot
+from scripts.audit_carbon_v2_campaign import TAG, _read_protocol, expected_filename, validate_campaign_shard
 
 ROOT = Path(__file__).resolve().parents[1]
 CANDIDATE = ROOT / "configs/carbon_v2_candidate_full_campaign.json"
@@ -32,6 +31,11 @@ def _git(*args: str) -> str:
 
 
 def _locked_environment() -> None:
+    if sys.version_info[:2] != (3, 13):
+        raise SystemExit(
+            "REFUSING unpinned full campaign: Python 3.13.x is required; "
+            f"found {sys.version.split()[0]}"
+        )
     versions = {line.split("==")[0].strip(): line.split("==")[1].strip()
                 for line in (ROOT / "requirements.txt").read_text().splitlines()
                 if "==" in line}
@@ -95,9 +99,14 @@ def run_one(scenario: str, seed_index: int, *, execute: bool) -> dict:
     if outpath.exists():
         # Never overwrite or resume opaque shards. An existing validated shard
         # is reused only if it passes independent schedule reconstruction.
-        validated = validate_pilot(outpath)
-        if validated["algorithms_verified"] != 13:
-            raise SystemExit("Existing shard did not validate")
+        # A pilot-level check alone does not establish P=50/T=500 or
+        # complete 501-point histories. Require the campaign-level strict
+        # metadata AND full independent schedule replay before reuse.
+        validated = validate_campaign_shard(
+            outpath, scenario, seed_index, seed, deep=True
+        )
+        if not validated["deep_simulator_validation"]:
+            raise SystemExit("Existing full-size shard did not deep-validate")
         return {"status": "existing-valid-shard", "file": str(outpath)}
     output_dir.mkdir(parents=True, exist_ok=True)
     cmd = [sys.executable, str(ROOT / "scripts/run_final_experiment_shard.py"),
@@ -108,9 +117,11 @@ def run_one(scenario: str, seed_index: int, *, execute: bool) -> dict:
     subprocess.run(cmd, cwd=ROOT, check=True)
     if not outpath.exists():
         raise RuntimeError("Experiment finished but the expected shard was not created")
-    audited = validate_pilot(outpath)
-    if audited["algorithms_verified"] != 13:
-        raise RuntimeError("Incomplete post-execution schedule validation")
+    audited = validate_campaign_shard(
+        outpath, scenario, seed_index, seed, deep=True
+    )
+    if not audited["deep_simulator_validation"]:
+        raise RuntimeError("Incomplete post-execution campaign validation")
     return {"status": "one-shard-executed-and-validated", "file": str(outpath),
             "git_sha": git_sha, "algorithms": 13}
 
