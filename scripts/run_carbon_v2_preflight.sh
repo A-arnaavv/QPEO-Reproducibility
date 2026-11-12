@@ -9,6 +9,7 @@ python -m pytest -q \
   tests/test_time_aligned_carbon_accounting.py \
   tests/test_time_aligned_carbon_neso_window.py \
   tests/test_time_aligned_carbon_full_suite.py \
+  tests/test_carbon_v2_fixed_planning_full_suite.py \
   tests/test_temporal_cpu_capacity_v2.py \
   tests/test_cpu_carbon_joint_v2.py
 
