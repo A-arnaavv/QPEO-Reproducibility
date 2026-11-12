@@ -36,3 +36,8 @@ def test_shell_launcher_requests_deep_first_shard_audit():
     source = SCRIPT.read_text(encoding="utf-8")
     assert "scripts/audit_carbon_v2_campaign.py --input-dir" in source
     assert "--fast-audit" not in source
+
+
+def test_first_shard_launcher_tracks_input_data_tree():
+    source = SCRIPT.read_text(encoding="utf-8")
+    assert "qpeo scripts configs tests data requirements.txt pyproject.toml" in source
