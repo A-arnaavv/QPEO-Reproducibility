@@ -181,3 +181,21 @@ def test_existing_shard_cannot_be_reused_with_wrong_full_budget(tmp_path, monkey
     monkeypatch.setattr(campaign, "_git", fake_git)
     with pytest.raises(ValueError, match="budget dimensions"):
         campaign.run_one("helios_earth", 0, execute=True)
+
+
+def test_full_shard_data_tree_is_in_git_integrity_gate(monkeypatch):
+    import scripts.run_carbon_v2_campaign as campaign
+    monkeypatch.setattr(campaign, "_locked_environment", lambda: None)
+    checked = []
+    def fake_git(*args):
+        if args == ("branch", "--show-current"):
+            return "carbon-accounting-v2-validation"
+        if args[:3] == ("status", "--porcelain", "--untracked-files=all"):
+            checked.append(args)
+            assert "data" in args, "Dataset and frozen forecast must be source-controlled"
+            return " M data/carbon/neso_regional_2026-01-05_2026-01-11.csv"
+        raise AssertionError(f"Unexpected Git request: {args!r}")
+    monkeypatch.setattr(campaign, "_git", fake_git)
+    with pytest.raises(SystemExit, match="uncommitted or untracked"):
+        campaign.run_one("microsoft_elasticflow_itp_cluster08", 0, execute=True)
+    assert len(checked)==1
