@@ -20,7 +20,7 @@ python scripts/run_final_experiment_shard.py \
   --carbon-time-accounting repeat \
   --output-dir results/carbon_v2_pilot
 
-output="results/carbon_v2_pilot/microsoft_elasticflow_itp_cluster08__seed00_104729__test-P4-T2-N64-carbon-time-v2-repeat.json"
+output="results/carbon_v2_pilot/microsoft_elasticflow_itp_cluster08__seed00_104729__test-P4-T2-N64-carbon-time-v2-repeat-fixedmean.json"
 if [[ ! -f "$output" ]]; then
   echo "ERROR: expected carbon-v2 pilot shard not found: $output" >&2
   exit 1
