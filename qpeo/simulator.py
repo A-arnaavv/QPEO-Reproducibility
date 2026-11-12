@@ -22,6 +22,11 @@ TIME_ROUNDOFF_EPS_HOURS = 1e-12
 # evaluation and feasibility, but not service times, arrivals, capacities or the
 # resulting schedule for an already-decoded assignment.
 _SIMULATION_CACHE: dict[tuple, "SimulationResult"] = {}
+# The cache key uses object IDs for speed. Keep their owners alive while the
+# cache exists so Python cannot recycle an ID for a different SimulatorInputs
+# instance or workload list between adjacent calls.
+_SIMULATION_CACHE_INPUT_REFERENCES: dict[int, "SimulatorInputs"] = {}
+_SIMULATION_CACHE_WORKLOAD_REFERENCES: dict[int, object] = {}
 _SIMULATION_CACHE_HITS = 0
 _SIMULATION_CACHE_MISSES = 0
 
@@ -29,6 +34,8 @@ _SIMULATION_CACHE_MISSES = 0
 def clear_simulation_cache() -> None:
     global _SIMULATION_CACHE_HITS, _SIMULATION_CACHE_MISSES
     _SIMULATION_CACHE.clear()
+    _SIMULATION_CACHE_INPUT_REFERENCES.clear()
+    _SIMULATION_CACHE_WORKLOAD_REFERENCES.clear()
     _SIMULATION_CACHE_HITS = 0
     _SIMULATION_CACHE_MISSES = 0
 
@@ -46,6 +53,8 @@ def _simulation_cache_key(
     X: np.ndarray,
     inputs: "SimulatorInputs",
 ) -> tuple:
+    _SIMULATION_CACHE_INPUT_REFERENCES[id(inputs)] = inputs
+    _SIMULATION_CACHE_WORKLOAD_REFERENCES[id(problem.workloads)] = problem.workloads
     static_resource_signature = tuple(
         (
             float(r.gpu_capacity),
