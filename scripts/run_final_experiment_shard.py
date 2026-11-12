@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
 
 import numpy as np
 
-from qpeo.carbon import load_neso_regional_replay
+from qpeo.carbon import load_neso_regional_replay, with_carbon_intensities
 from qpeo.carbon_accounting import CarbonTimeSeries, account_simulation_result
 from qpeo.experiment import run_full_suite
 from qpeo.optimizer import ReconstructionQPEOSettings
@@ -153,11 +153,14 @@ def main():
     algorithms=[_serialize_result(r) for r in suite.records]
     if args.carbon_time_accounting is not None:
         sim_inputs=bundle.qpeo_inputs.simulator_inputs
+        final_problem=with_carbon_intensities(
+            bundle.problem,replay.at_iteration(T,T)
+        )
         for item,record in zip(algorithms,suite.records):
             X=record.result.guide_assignment
-            sim=simulate_fixed_assignment(bundle.problem,X,sim_inputs)
+            sim=simulate_fixed_assignment(final_problem,X,sim_inputs)
             audit=account_simulation_result(
-                bundle.problem,X,sim_inputs,sim,sim_inputs.carbon_time_series
+                final_problem,X,sim_inputs,sim,sim_inputs.carbon_time_series
             )
             # Retain the final guide's original scheduling intervals for verification.
             item["guide_assignment_indices"]=np.argmax(X,axis=1).tolist()
