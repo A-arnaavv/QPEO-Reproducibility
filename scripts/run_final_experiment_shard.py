@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
+import hashlib
 import json
 import os
 from pathlib import Path
+import platform
+import subprocess
 import sys
 import tempfile
 from typing import Callable
@@ -84,6 +87,32 @@ def build_scenario(name:str,size:int):
         expected_slot_names=[s.name for s in env.slots],
     )
     return builder(snapshot,cfg,env,replay,size=size),env,replay
+
+
+def _local_provenance() -> dict:
+    """Record exact revision and source/config status for a local validation run."""
+    def git(*args):
+        try:
+            result=subprocess.run(
+                ["git", "-C", str(ROOT), *args],
+                check=True, capture_output=True, text=True, timeout=10,
+            )
+            return result.stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            return None
+
+    revision=os.environ.get("GITHUB_SHA") or git("rev-parse", "HEAD")
+    dirty=git("status", "--porcelain", "--untracked-files=no")
+    protocol_path=ROOT/"configs"/"carbon_v2_provisional_pilot_protocol.json"
+    protocol_hash=(hashlib.sha256(protocol_path.read_bytes()).hexdigest()
+                   if protocol_path.exists() else None)
+    return {
+        "source_git_sha":revision,
+        "source_has_tracked_changes":None if dirty is None else bool(dirty),
+        "provisional_protocol_sha256":protocol_hash,
+        "python_version":platform.python_version(),
+        "numpy_version":np.__version__,
+    }
 
 
 def main():
@@ -179,6 +208,7 @@ def main():
             item["guide_completion_hours"]=sim.completion_times.tolist()
             item["guide_carbon_g"]=audit.total_carbon_g
             item["guide_carbon_intensity_g_per_kwh"]=audit.energy_weighted_intensity_g_per_kwh
+    provenance=_local_provenance() if args.carbon_time_accounting is not None else None
     payload={
         "schema_version":"qpeo-carbon-v2-test-shard-v1" if args.carbon_time_accounting is not None else "qpeo-final-shard-v1",
         "final_protocol":final_protocol,
@@ -189,7 +219,8 @@ def main():
         "seed":seed,
         "population_size":P,
         "max_iterations":T,
-        "git_sha":os.environ.get("GITHUB_SHA"),
+        "git_sha":provenance["source_git_sha"] if provenance is not None else os.environ.get("GITHUB_SHA"),
+        "execution_provenance":provenance,
         "resource_environment_version":env.version,
         "carbon_source":replay.source_name,
         "carbon_rows":replay.rows,
