@@ -13,7 +13,12 @@
     "coverage_hours": 168,
     "first_selected_workload_arrival_aligned_to_first_forecast_row": true,
     "coverage_policy": "repeat",
-    "interpretation": "repeat the 168-hour forecast cyclically for every one of four simulated scheduling scenarios, not real/observed subsequent-week carbon intensity"
+    "interpretation": "repeat the 168-hour forecast cyclically for every one of four simulated scheduling scenarios, not real/observed subsequent-week carbon intensity",
+    "planning_signal": "fixed arithmetic mean per resource over the 336-row NESO week",
+    "optimizer_iteration_carbon_mapping": "disabled in v2 mode; no artificial time advancement per optimizer iteration",
+    "planning_constraint_semantics": "carbon class thresholds apply to fixed per-region week-mean forecast intensity; not a guarantee of threshold compliance at every job execution instant",
+    "objective_semantics": "time-integrated GPU-side energy-weighted forecast carbon intensity across the simulated job execution intervals",
+    "replay_assumption": "fixed full-week forecasts available to an offline counterfactual scheduler; not a real-time production scheduling demonstration"
   },
   "applies_to_scenarios": [
     "alibaba_gpu_v2023",
@@ -25,14 +30,14 @@
   "carbon_objective": "modeled GPU-side time-integrated energy-weighted forecast intensity in gCO2e/kWh",
   "additional_reporting_metric": "modelled total carbon exposure grams CO2e from energy x time-varying intensity",
   "remaining_limitations": [
-    "two new 13-optimizer integration smoke tests not yet executed",
+    "full 13-algorithm integration smoke tests are committed but not executed in the complete repository checkout",
+    "aggregate CPU enforcement is implemented on the validation branch, but full-repository regression and real-trace pilot remain unexecuted",
+    "fixed region-mean planning constraints are not guaranteed per-execution-interval carbon limits",
     "no complete 13 algorithm x 30 seeds x 4 scenarios carbon-v2 experiment results",
-    "constraint/decoder carbon feasibility remains optimizer-iteration-indexed while f3 is execution-time-aligned",
-    "simulator does not enforce simultaneous aggregate CPU capacity",
     "original traces are not historical measurements of UK regional electricity use",
     "workload-activity-based GPU-side power excludes inactive idle and host power",
     "EBWS remains unexercised because recorded dependencies are absent",
     "selected forecast period may not be representative of different seasonal intensity"
   ],
-  "publication_gate": "Requires coauthor approval, branch integration tests, real-trace small pilot, model consistency check, full rerun, independent analysis, revised tables and narrative."
+  "publication_gate": "Requires coauthor approval of offline counterfactual model and periodic replay assumption, end-to-end tests, one real-trace pilot, full corrected cohort, statistical analysis, and regenerated manuscript results."
 }
