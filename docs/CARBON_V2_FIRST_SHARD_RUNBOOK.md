@@ -56,3 +56,31 @@ The repeated 168-hour UK carbon forecast is a counterfactual modeling assumption
 - The local test container has Python 3.13.5, but NumPy 2.3.5, SciPy 1.17.0, pytest 9.0.2. Exact locked versions are NumPy 2.4.6, SciPy 1.17.1, pytest 9.2.0. Required wheels were unavailable from the local cache and network-backed install is not available here; no full-size shard was run.
 - A read-only *empty-cohort* audit confirmed **0 valid, 120 missing, 0 invalid**, as expected before running a full shard. The empty-cohort audit is not evidence that any experiment has completed.
 - The next action remains setting up the pinned Python 3.13 environment on an internet-connected computer (`bash scripts/carbon_v2_first_shard_local.sh --install`), followed by one explicitly approved `--execute-one` full-size experiment. The full 120-shard study and manuscript results remain pending.
+
+
+## Provenance gate strengthened (12 November 2026, subsequent audit)
+
+The corrected primary-campaign runner was audited further. Two gaps were fixed on the same validation branch:
+
+1. **Reuse of existing output:** The runner now calls the strict campaign-level `validate_campaign_shard(..., deep=True)` for any existing or newly created shard. A merely pilot-valid JSON with incorrect P, T, history length, filename, or seed cannot be silently reused as a full-size result.
+2. **Runtime provenance:** The runner explicitly requires Python 3.13.x. Each carbon-v2 output records Python, NumPy, SciPy and pytest versions. The campaign auditor verifies these recorded values against the pinned requirements (`numpy==2.4.6`, `scipy==1.17.1`, `pytest==9.2.0`). It rejects an unpinned run even when the numbers and simulated schedule seem internally consistent.
+
+Three new regression tests cover the Python version guard, dependency provenance, and mislabeled pilot reuse. **The complete local test suite passes 116/116 tests.** The four modified source/test files were independently confirmed to have **identical Git blob SHA-1s** between the locally tested tree and the GitHub validation branch.
+
+Official PyPI release pages confirm these package versions exist, but the current isolated container cannot download them, so the first publication-grade shard remains **NOT EXECUTED (0/120)**. Running tests with the container's NumPy 2.3.5, SciPy 1.17.0 and pytest 9.0.2 does not satisfy the locked campaign requirement.
+
+To prepare a **fresh, clean clone** on a Mac/Linux machine with package access:
+
+```bash
+git clone --branch carbon-accounting-v2-validation https://github.com/A-arnaavv/QPEO-Reproducibility.git
+cd QPEO-Reproducibility
+bash scripts/carbon_v2_first_shard_local.sh --install
+```
+
+This is **setup/testing only**, not a full-size experimental run. After methodology approval, deliberately execute **exactly one** corrected shard:
+
+```bash
+bash scripts/carbon_v2_first_shard_local.sh --execute-one
+```
+
+The runner now requires **full campaign-level and schedule-level checks** for that one shard, and the launcher performs a deep collection audit. The collection is expected to show **1 valid, 119 missing, 0 invalid** until further runs occur. Share the single saved JSON shard and campaign audit for independent review; do not substitute the earlier P=50/T=20 exploratory pilot.
