@@ -101,3 +101,14 @@ GitHub regression tests committed:
 The carbon **decision-time feasibility** rule currently still uses an optimizer-iteration forecast, while carbon **outcome accounting** uses the workload-execution-time forecast. This may be a valid two-stage planning model only if stated explicitly; it is not a proof that the threshold was met at every execution interval. Reconsider how the carbon class thresholds should be interpreted before the full v2 experiment.
 
 Once a runnable full repository checkout is available: first run python -m pytest -q tests/test_temporal_cpu_capacity_v2.py tests/test_cpu_carbon_joint_v2.py tests/test_time_aligned_carbon_full_suite.py; then run scripts/run_final_experiment_shard.py with --population-size 4 --max-iterations 2 --carbon-time-accounting repeat for a single real-trace seed, inspect the persisted guide schedules and carbon totals, and only then consider the full cohort.
+
+
+## Preflight and optimization improvements
+
+- `qpeo/carbon_accounting.py` now takes a defensive read-only copy of the forecast matrix and caches its piecewise-constant cumulative intensity integral once per `CarbonTimeSeries`. This prevents rebuilding the 336-row table for every candidate and preserves numerical results. New immutability regression added.
+- Locally executed pure-function and extracted CPU-helper checks: **18/18 passed** (12 accounting, five temporal CPU helper, one joint CPU–carbon example); full-repository 13-algorithm smoke tests still **not executed locally**.
+- Synthetic 64-job/7-resource local integration stress: 2,000 calls took approximately **0.58 s** with cached integral vs **0.64 s** with forced recalculation; both returned identical modeled carbon to six decimal places. These figures are a microbenchmark of the accounting routine, not end-to-end QPEO timing.
+- A read-only `scripts/validate_carbon_v2_pilot.py` now checks saved outputs for all 13 algorithms: assignment indices, 64 workload intervals, recorded service times, arrival constraints, simultaneous CPU/GPU/RAM capacities, and recomputed modeled energy and carbon against saved values.
+- `scripts/run_carbon_v2_preflight.sh` supplies a self-contained local workflow for five small test modules, a **one-seed P=4/T=2** Microsoft trace pilot, and the validator. It does not launch Actions, run the full experimental cohort, or overwrite v1 `__final.json` results.
+
+**Important:** The output validator and preflight shell script are committed but have **not been executed against a complete local checkout** in this environment. They are safeguards awaiting the real integration pilot, not evidence that the 13 optimizers have passed corrected end-to-end tests. Publication remains blocked until the pilot and complete corrected cohort are verified.
