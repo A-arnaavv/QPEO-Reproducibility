@@ -84,3 +84,12 @@ bash scripts/carbon_v2_first_shard_local.sh --execute-one
 ```
 
 The runner now requires **full campaign-level and schedule-level checks** for that one shard, and the launcher performs a deep collection audit. The collection is expected to show **1 valid, 119 missing, 0 invalid** until further runs occur. Share the single saved JSON shard and campaign audit for independent review; do not substitute the earlier P=50/T=20 exploratory pilot.
+
+
+## Dataset integrity gate (12 November 2026)
+
+The first full-size shard, its underlying runner, and its recorded execution provenance now treat the entire **data/** tree as part of the source-cleanliness gate, alongside qpeo/, scripts/, configs/, tests/, requirements.txt and pyproject.toml. This blocks execution if any committed input trace, the frozen NESO forecast CSV, or the archived NESO raw JSON is modified, or if any untracked data files are present. The source Git SHA therefore identifies the data as well as the algorithm code and configuration. Two new regression tests explicitly verify this requirement.
+
+**Actual local tests:** 118 / 118 passed in Python 3.13.5 with the *unpinned* container packages (NumPy 2.3.5, SciPy 1.17.0, pytest 9.0.2). These tests verify the new gate but do NOT satisfy the publication-run environment. The source and regression files match their GitHub committed blob hashes exactly.
+
+**Campaign state:** 0/120 full-size shards executed. The first full-size shard still requires a fresh clean Git checkout and the three pinned package versions. Do not relabel the earlier one-seed P=50/T=20 exploratory test as P=50/T=500 evidence; do not modify the manuscript's numerical tables until the corrected complete study is independently audited.
