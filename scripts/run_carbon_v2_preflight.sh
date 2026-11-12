@@ -13,20 +13,23 @@ python -m pytest -q \
   tests/test_temporal_cpu_capacity_v2.py \
   tests/test_cpu_carbon_joint_v2.py
 
+revision="$(git rev-parse --short=12 HEAD)"
+pilot_dir="results/carbon_v2_pilot/${revision}"
+
 python scripts/run_final_experiment_shard.py \
   --scenario microsoft_elasticflow_itp_cluster08 \
   --seed-index 0 \
   --population-size 4 \
   --max-iterations 2 \
   --carbon-time-accounting repeat \
-  --output-dir results/carbon_v2_pilot
+  --output-dir "$pilot_dir"
 
-output="results/carbon_v2_pilot/microsoft_elasticflow_itp_cluster08__seed00_104729__test-P4-T2-N64-carbon-time-v2-repeat-fixedmean.json"
+output="$pilot_dir/microsoft_elasticflow_itp_cluster08__seed00_104729__test-P4-T2-N64-carbon-time-v2-repeat-fixedmean.json"
 if [[ ! -f "$output" ]]; then
   echo "ERROR: expected carbon-v2 pilot shard not found: $output" >&2
   exit 1
 fi
 python scripts/validate_carbon_v2_pilot.py "$output" \
-  --report-file results/carbon_v2_pilot/pilot_validation_report.json
+  --report-file "$pilot_dir/pilot_validation_report.json"
 
 echo "Carbon-v2 small pilot completed and validated. NO primary benchmark was rerun."
