@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import json
 import os
 from pathlib import Path
@@ -15,10 +16,12 @@ if str(ROOT) not in sys.path:
 import numpy as np
 
 from qpeo.carbon import load_neso_regional_replay
+from qpeo.carbon_accounting import CarbonTimeSeries, account_simulation_result
 from qpeo.experiment import run_full_suite
 from qpeo.optimizer import ReconstructionQPEOSettings
 from qpeo.protocol import load_protocol
 from qpeo.resource_environment import load_resource_environment
+from qpeo.simulator import simulate_fixed_assignment
 from qpeo.scenarios import (
     build_alibaba_gpu_v2023_scenario,
     build_alibaba_spot_a100_scenario,
@@ -90,6 +93,8 @@ def main():
     ap.add_argument("--size",type=int,default=64,choices=[32,64,128])
     ap.add_argument("--output-dir",default="results/raw")
     ap.add_argument("--force",action="store_true")
+    ap.add_argument("--carbon-time-accounting",choices=("strict","repeat"),default=None,
+                    help="Opt-in v2 execution-time carbon objective; NEVER overwrites locked v1 shards")
     ap.add_argument("--population-size",type=int,default=None,help="Testing override; omit for locked final protocol")
     ap.add_argument("--max-iterations",type=int,default=None,help="Testing override; omit for locked final protocol")
     args=ap.parse_args()
@@ -100,17 +105,38 @@ def main():
     seed=int(primary.seeds[args.seed_index])
     P=primary.population_size if args.population_size is None else int(args.population_size)
     T=primary.max_iterations if args.max_iterations is None else int(args.max_iterations)
-    final_protocol=(args.population_size is None and args.max_iterations is None and args.size==64)
+    final_protocol=(args.population_size is None and args.max_iterations is None and args.size==64
+                    and args.carbon_time_accounting is None)
 
     outdir=ROOT/args.output_dir
     outdir.mkdir(parents=True,exist_ok=True)
     tag="final" if final_protocol else f"test-P{P}-T{T}-N{args.size}"
+    if args.carbon_time_accounting is not None:
+        tag+=f"-carbon-time-v2-{args.carbon_time_accounting}"
     outpath=outdir/f"{args.scenario}__seed{args.seed_index:02d}_{seed}__{tag}.json"
     if outpath.exists() and not args.force:
         print(f"exists, skipping: {outpath}")
         return
 
     bundle,env,replay=build_scenario(args.scenario,args.size)
+    if args.carbon_time_accounting is not None:
+        # First job arrival is mapped to the beginning of the frozen NESO week.
+        # Strict coverage rejects horizons >168 h; repeating the week is explicitly
+        # a counterfactual sensitivity assumption, not observed future forecasts.
+        steps=np.diff([t.timestamp() for t in replay.timestamps_utc])/3600.0
+        if len(steps)==0 or not np.allclose(steps,steps[0]) or steps[0]<=0:
+            raise ValueError("Time-aligned accounting requires a uniformly spaced replay")
+        carbon_time=CarbonTimeSeries(
+            intensities_g_per_kwh=replay.intensities,
+            step_hours=float(steps[0]),
+            forecast_start_hours=0.0,
+            coverage_policy=args.carbon_time_accounting,
+        )
+        bundle=replace(bundle,qpeo_inputs=replace(
+            bundle.qpeo_inputs,
+            simulator_inputs=replace(bundle.qpeo_inputs.simulator_inputs,
+                                     carbon_time_series=carbon_time),
+        ))
     weights=tuple(primary.scalar_guide_weights)
     settings=ReconstructionQPEOSettings(
         scalar_weights=weights,
@@ -124,6 +150,21 @@ def main():
         bundle.problem,bundle.qpeo_inputs,settings,weights,
         seeds=[seed],population_size=P,max_iterations=T,
     )
+    algorithms=[_serialize_result(r) for r in suite.records]
+    if args.carbon_time_accounting is not None:
+        sim_inputs=bundle.qpeo_inputs.simulator_inputs
+        for item,record in zip(algorithms,suite.records):
+            X=record.result.guide_assignment
+            sim=simulate_fixed_assignment(bundle.problem,X,sim_inputs)
+            audit=account_simulation_result(
+                bundle.problem,X,sim_inputs,sim,sim_inputs.carbon_time_series
+            )
+            # Retain the final guide's original scheduling intervals for verification.
+            item["guide_assignment_indices"]=np.argmax(X,axis=1).tolist()
+            item["guide_start_hours"]=sim.start_times.tolist()
+            item["guide_completion_hours"]=sim.completion_times.tolist()
+            item["guide_carbon_g"]=audit.total_carbon_g
+            item["guide_carbon_intensity_g_per_kwh"]=audit.energy_weighted_intensity_g_per_kwh
     payload={
         "schema_version":"qpeo-final-shard-v1",
         "final_protocol":final_protocol,
@@ -138,7 +179,11 @@ def main():
         "resource_environment_version":env.version,
         "carbon_source":replay.source_name,
         "carbon_rows":replay.rows,
-        "algorithms":[_serialize_result(r) for r in suite.records],
+        "carbon_time_accounting":None if args.carbon_time_accounting is None else {
+            "version":"v2", "coverage_policy":args.carbon_time_accounting,
+            "forecast_clock_alignment":"first selected job arrival = first NESO forecast row",
+        },
+        "algorithms":algorithms,
     }
     if len(payload["algorithms"])!=13:
         raise RuntimeError("Expected exactly 13 algorithms in a full-suite shard")
