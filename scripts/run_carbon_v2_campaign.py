@@ -77,8 +77,15 @@ def run_one(scenario: str, seed_index: int, *, execute: bool) -> dict:
     current_branch = _git("branch", "--show-current")
     if current_branch != "carbon-accounting-v2-validation":
         raise SystemExit("REFUSING: must run from the carbon-accounting-v2-validation branch")
-    if _git("status", "--porcelain", "--untracked-files=no"):
-        raise SystemExit("REFUSING: tracked Git checkout has uncommitted changes")
+    source_changes = _git(
+        "status", "--porcelain", "--untracked-files=all", "--",
+        "qpeo", "scripts", "configs", "tests", "requirements.txt", "pyproject.toml",
+    )
+    if source_changes:
+        raise SystemExit(
+            "REFUSING: source/config/test tree contains uncommitted or untracked files: "
+            + source_changes[:500]
+        )
     git_sha = _git("rev-parse", "HEAD")
     if len(git_sha) != 40:
         raise SystemExit("REFUSING: invalid Git revision")
