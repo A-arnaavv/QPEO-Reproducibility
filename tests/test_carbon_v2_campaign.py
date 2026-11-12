@@ -27,6 +27,10 @@ def fake_shard():
         "execution_provenance": {
             "source_git_sha": "a"*40,
             "source_has_tracked_changes": False,
+            "python_version": "3.13.5",
+            "numpy_version": "2.4.6",
+            "scipy_version": "1.17.1",
+            "pytest_version": "9.2.0",
         },
         "carbon_time_accounting": {
             "version": "v2", "coverage_policy": "repeat",
@@ -126,3 +130,54 @@ def test_full_shard_rejects_untracked_source_before_execution(monkeypatch):
     monkeypatch.setattr(campaign, "_git", fake_git)
     with pytest.raises(SystemExit, match="untracked"):
         campaign.run_one("microsoft_elasticflow_itp_cluster08", 0, execute=True)
+
+
+def test_campaign_shard_requires_pinned_python_and_dependency_provenance(tmp_path):
+    d = fake_shard()
+    p = put_shard(tmp_path, d)
+    d["execution_provenance"]["python_version"] = "3.12.9"
+    p.write_text(json.dumps(d))
+    with pytest.raises(ValueError, match="Python 3.13"):
+        validate_campaign_shard(p, "helios_earth", 0, 104729, deep=False)
+    d["execution_provenance"]["python_version"] = "3.13.5"
+    d["execution_provenance"]["scipy_version"] = "1.17.0"
+    p.write_text(json.dumps(d))
+    with pytest.raises(ValueError, match="unpinned scipy"):
+        validate_campaign_shard(p, "helios_earth", 0, 104729, deep=False)
+    d["execution_provenance"]["scipy_version"] = "1.17.1"
+    p.write_text(json.dumps(d))
+    assert validate_campaign_shard(p, "helios_earth", 0, 104729, deep=False)
+
+
+def test_full_campaign_runner_refuses_wrong_python_minor_version(monkeypatch):
+    import scripts.run_carbon_v2_campaign as campaign
+    monkeypatch.setattr(campaign.sys, "version_info", (3, 12, 9))
+    with pytest.raises(SystemExit, match="Python 3.13"):
+        campaign._locked_environment()
+
+
+def test_existing_shard_cannot_be_reused_with_wrong_full_budget(tmp_path, monkeypatch):
+    import scripts.run_carbon_v2_campaign as campaign
+    revision = "a" * 40
+    root = tmp_path / "repo"
+    campaign_dir = root / "results" / "carbon_v2_campaign" / revision[:12]
+    campaign_dir.mkdir(parents=True)
+    path = campaign_dir / expected_filename("helios_earth", 0, 104729)
+    d = fake_shard()
+    d["population_size"] = 4
+    d["max_iterations"] = 2
+    path.write_text(json.dumps(d))
+    monkeypatch.setattr(campaign, "ROOT", root)
+    monkeypatch.setattr(campaign, "_locked_environment", lambda: None)
+    monkeypatch.setattr(campaign, "_read_protocol", lambda: {"seeds": [104729]})
+    def fake_git(*args):
+        if args == ("branch", "--show-current"):
+            return "carbon-accounting-v2-validation"
+        if args[:3] == ("status", "--porcelain", "--untracked-files=all"):
+            return ""
+        if args == ("rev-parse", "HEAD"):
+            return revision
+        raise AssertionError(f"Unexpected Git command: {args!r}")
+    monkeypatch.setattr(campaign, "_git", fake_git)
+    with pytest.raises(ValueError, match="budget dimensions"):
+        campaign.run_one("helios_earth", 0, execute=True)
