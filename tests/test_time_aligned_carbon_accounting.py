@@ -125,3 +125,15 @@ def test_forecast_origin_must_align_with_job_clock():
             [[(0., 1., 1.)]], gpu_capacities=[1.], idle_power_kw=[0.],
             dynamic_power_kw=[0.3], power_exponent=1., forecast=forecast,
         )
+
+
+def test_forecast_defensive_copy_and_cached_integral():
+    original = np.array([[50.0, 150.0], [100.0, 250.0]])
+    forecast = CarbonTimeSeries(original, 0.5)
+    original[0, 0] = 9999.0
+    assert forecast.intensities_g_per_kwh[0, 0] == pytest.approx(50.0)
+    assert not forecast.intensities_g_per_kwh.flags.writeable
+    first = forecast.cumulative_intensity_hours
+    assert forecast.cumulative_intensity_hours is first
+    assert not first.flags.writeable
+    assert np.allclose(first, [[0.0, 0.0], [25.0, 75.0], [75.0, 200.0]])
