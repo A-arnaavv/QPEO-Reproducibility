@@ -57,3 +57,23 @@ This generates a test-tagged carbon-v2 file, not a new primary result.
 5. After validation and a locked v2 protocol, the full 13-algorithm study must be rerun, then all objectives, statistics, figures and manuscript claims regenerated. Updating only Table 6 would be misleading because changing f3 changes the optimizer's solution choices.
 
 **Do not insert the v1 carbon-intensity numbers into a manuscript Table 6 labelled as time-aligned carbon exposure or emissions.**
+
+
+## Local follow-up validation (12 November 2026; completed in the analysis runtime)
+
+The local tests/test_time_aligned_carbon_accounting.py suite was **rerun and 11/11 tests passed**.
+
+Two additional local **synthetic constant-load** pilot scripts evaluated the exact frozen NESO North Scotland forecast values (NOT the full QPEO optimizer or source workload trace) using the committed qpeo/carbon_accounting.py:
+
+|Period|Policy|Modeled energy|Modeled carbon|Energy-weighted intensity|Status|
+|---|---|---:|---:|---:|---|
+|First 16.4 hours of NESO week|strict|4.920 kWh|502.230 gCO2e|102.079 gCO2e/kWh|PASS|
+|First 16.4 hours|repeat|4.920 kWh|502.230 gCO2e|102.079 gCO2e/kWh|PASS; same as strict inside forecast|
+|308 hours, including forecast overflow|strict|—|—|—|PASS: rejects unsupported forecast horizon|
+|308 hours, including periodic replay|repeat|92.400 kWh|9,298.350 gCO2e|100.631 gCO2e/kWh|PASS|
+
+These values were cross-checked with a separate direct sum of actual 336 half-hour North Scotland forecast rows. **They are validation fixtures, not benchmark/QPEO results.** The terminal NESO value was zero, whereas the time-aligned 16.4-hour exposure was positive.
+
+A provisional consistent **repeat** policy across all four scenarios is recorded in configs/carbon_v2_provisional_pilot_protocol.json. It is intended for *controlled counterfactual simulations*, not real subsequent-week grid forecasts. The configuration is **not locked for publication** until the full implementation is tested end-to-end, coauthors approve its assumptions, and the corrected experimental campaign is rerun. Strict mode remains useful to validate coverage for scenarios shorter than 168 hours.
+
+**Full 13-optimizer integration status:** The two synthetic optimizer smoke tests have been committed but NOT executed in this analysis environment, which has only the carbon-accounting module, not a full runnable checkout of the private GitHub repository. Neither the small real-trace optimizer pilot nor full 1,560-run v2 study has been executed. Do not confuse accounting fixtures with algorithm performance results. No GitHub Actions were launched.
