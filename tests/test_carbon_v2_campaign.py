@@ -112,3 +112,17 @@ def test_no_statistical_analysis_of_partial_or_fast_audited_campaign(tmp_path):
 def test_one_shard_without_explicit_execute_never_calls_optimizers():
     with pytest.raises(SystemExit, match="--execute"):
         run_one("helios_earth", 0, execute=False)
+
+
+def test_full_shard_rejects_untracked_source_before_execution(monkeypatch):
+    import scripts.run_carbon_v2_campaign as campaign
+    monkeypatch.setattr(campaign, "_locked_environment", lambda: None)
+    def fake_git(*args):
+        if args == ("branch", "--show-current"):
+            return "carbon-accounting-v2-validation"
+        if args[:3] == ("status", "--porcelain", "--untracked-files=all"):
+            return "?? scripts/untracked_candidate_runner.py"
+        raise AssertionError(f"Unexpected Git request: {args!r}")
+    monkeypatch.setattr(campaign, "_git", fake_git)
+    with pytest.raises(SystemExit, match="untracked"):
+        campaign.run_one("microsoft_elasticflow_itp_cluster08", 0, execute=True)
