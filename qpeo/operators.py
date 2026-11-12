@@ -35,9 +35,19 @@ def ecological_compatibility(
     M,N=perf.shape
     if therm.shape!=(N,) or ci.shape!=(N,):
         raise ValueError("thermal_headroom and carbon_intensity must have shape (N,).")
+    if not np.all(np.isfinite(ci)) or np.any(ci < 0):
+        raise ValueError("carbon_intensity must be finite and non-negative.")
     cmax=float(ci_max if ci_max is not None else np.max(ci))
-    if cmax<=0: raise ValueError("ci_max must be > 0.")
-    return alpha*perf + beta*therm[None,:] + gamma*(1.0-ci[None,:]/cmax)
+    if cmax <= 0:
+        if ci_max is not None or cmax < 0:
+            raise ValueError("ci_max must be > 0.")
+        # A valid all-zero forecast has no carbon-based preference between
+        # resources. Keep the constant maximal compatibility term rather than
+        # dividing by zero or rejecting the entire scheduling iteration.
+        carbon_score = np.ones((1, N), dtype=float)
+    else:
+        carbon_score = 1.0 - ci[None, :] / cmax
+    return alpha*perf + beta*therm[None,:] + gamma*carbon_score
 
 def assignment_probabilities(theta: np.ndarray, omega: np.ndarray) -> np.ndarray:
     """Eq. (9): P_n(i,j)=sin^2(theta_n(i*N+j))*Omega(i,j)."""
