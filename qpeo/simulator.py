@@ -5,6 +5,7 @@ from typing import Literal
 
 import numpy as np
 
+from .carbon_accounting import CarbonTimeSeries
 from .evaluator import check_constraints
 from .models import EvaluationState, ProblemInstance
 
@@ -99,6 +100,7 @@ class SimulatorInputs:
     service_time_hours: np.ndarray
     power_model: PowerModel
     billing_mode: BillingMode
+    carbon_time_series: CarbonTimeSeries | None = None
 
     def validate(self, M: int, N: int) -> None:
         service = np.asarray(self.service_time_hours, dtype=float)
@@ -109,6 +111,8 @@ class SimulatorInputs:
         self.power_model.validate(N)
         if self.billing_mode not in ("active_resource_hours", "allocated_gpu_hours"):
             raise ValueError("Unsupported billing_mode.")
+        if self.carbon_time_series is not None:
+            self.carbon_time_series.validate(N)
 
 
 @dataclass(frozen=True)
