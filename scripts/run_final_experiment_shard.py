@@ -112,7 +112,7 @@ def main():
     outdir.mkdir(parents=True,exist_ok=True)
     tag="final" if final_protocol else f"test-P{P}-T{T}-N{args.size}"
     if args.carbon_time_accounting is not None:
-        tag+=f"-carbon-time-v2-{args.carbon_time_accounting}"
+        tag+=f"-carbon-time-v2-{args.carbon_time_accounting}-fixedmean"
     outpath=outdir/f"{args.scenario}__seed{args.seed_index:02d}_{seed}__{tag}.json"
     if outpath.exists() and not args.force:
         print(f"exists, skipping: {outpath}")
@@ -132,11 +132,24 @@ def main():
             forecast_start_hours=0.0,
             coverage_policy=args.carbon_time_accounting,
         )
-        bundle=replace(bundle,qpeo_inputs=replace(
-            bundle.qpeo_inputs,
-            simulator_inputs=replace(bundle.qpeo_inputs.simulator_inputs,
-                                     carbon_time_series=carbon_time),
-        ))
+        # v2 is a ONE-SHOT, OFFLINE planning problem: the full forecast is
+        # declared available before placement. Its regional time means are fixed
+        # signals for CAQC/decoder eligibility and affinity during optimization.
+        # There is no artificial advancement of grid time per optimizer iteration.
+        # Time-resolved emissions remain evaluated from the actual job schedules.
+        planning_ci=np.mean(replay.intensities,axis=0)
+        bundle=replace(
+            bundle,
+            problem=with_carbon_intensities(bundle.problem,planning_ci),
+            qpeo_inputs=replace(
+                bundle.qpeo_inputs,
+                carbon_replay=None,
+                simulator_inputs=replace(
+                    bundle.qpeo_inputs.simulator_inputs,
+                    carbon_time_series=carbon_time,
+                ),
+            ),
+        )
     weights=tuple(primary.scalar_guide_weights)
     settings=ReconstructionQPEOSettings(
         scalar_weights=weights,
@@ -153,9 +166,7 @@ def main():
     algorithms=[_serialize_result(r) for r in suite.records]
     if args.carbon_time_accounting is not None:
         sim_inputs=bundle.qpeo_inputs.simulator_inputs
-        final_problem=with_carbon_intensities(
-            bundle.problem,replay.at_iteration(T,T)
-        )
+        final_problem=bundle.problem  # Same frozen planning model used by optimizers.
         for item,record in zip(algorithms,suite.records):
             X=record.result.guide_assignment
             sim=simulate_fixed_assignment(final_problem,X,sim_inputs)
@@ -169,7 +180,7 @@ def main():
             item["guide_carbon_g"]=audit.total_carbon_g
             item["guide_carbon_intensity_g_per_kwh"]=audit.energy_weighted_intensity_g_per_kwh
     payload={
-        "schema_version":"qpeo-final-shard-v1",
+        "schema_version":"qpeo-carbon-v2-test-shard-v1" if args.carbon_time_accounting is not None else "qpeo-final-shard-v1",
         "final_protocol":final_protocol,
         "scenario":args.scenario,
         "dataset_id":bundle.dataset_id,
@@ -185,6 +196,10 @@ def main():
         "carbon_time_accounting":None if args.carbon_time_accounting is None else {
             "version":"v2", "coverage_policy":args.carbon_time_accounting,
             "forecast_clock_alignment":"first selected job arrival = first NESO forecast row",
+            "planning_signal":"fixed full-week regional mean intensity",
+            "planning_carbon_intensities_g_per_kwh":np.mean(replay.intensities,axis=0).tolist(),
+            "decision_scope":"offline counterfactual one-shot scheduling with full forecast access",
+            "carbon_constraint_scope":"resource forecast-week mean intensity, not per-execution-interval guarantee",
         },
         "algorithms":algorithms,
     }
