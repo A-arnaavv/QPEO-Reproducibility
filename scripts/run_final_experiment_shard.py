@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import replace
 import hashlib
+from importlib import metadata as package_metadata
 import json
 import os
 from pathlib import Path
@@ -115,6 +116,8 @@ def _local_provenance() -> dict:
         "provisional_protocol_sha256":protocol_hash,
         "python_version":platform.python_version(),
         "numpy_version":np.__version__,
+        "scipy_version":package_metadata.version("scipy"),
+        "pytest_version":package_metadata.version("pytest"),
     }
 
 
