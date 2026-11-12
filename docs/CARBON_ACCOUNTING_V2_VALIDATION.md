@@ -52,7 +52,7 @@ This generates a test-tagged carbon-v2 file, not a new primary result.
 
 1. Execute the two new end-to-end integration tests and a small real-trace pilot in a local or otherwise explicitly approved environment. Do not automatically dispatch GitHub Actions.
 2. The frozen NESO week has only **168 hours** of coverage; the Alibaba v2023 main scenario is about **308 hours** long. Strict mode must reject that mismatch. Either obtain a sufficiently long actual forecast or explicitly preregister the repeat-policy as a counterfactual sensitivity test.
-3. The decoder still enforces carbon thresholds using the **optimizer-iteration-indexed** forecast, whereas the new objective uses the **simulated job-execution-time-indexed** forecast. The hybrid is disclosed; a fully time-consistent carbon-feasibility policy requires another design and code review.
+3. **Updated:** In the opt-in v2 shard runner, the decoder and CAQC use the **fixed full-week regional mean forecast** for offline planning at every search iteration. The objective integrates intensity over actual simulated execution intervals. Thresholds are therefore **planning-average** resource eligibility checks, not per-interval execution guarantees. This is a modeled offline counterfactual, not a real-time dispatch demonstration.
 4. Aggregate simultaneous CPU demand is not constrained by the current simulator, and EBWS has no dependency edges in the four primary traces. The carbon patch does not resolve these separate scientific issues.
 5. After validation and a locked v2 protocol, the full 13-algorithm study must be rerun, then all objectives, statistics, figures and manuscript claims regenerated. Updating only Table 6 would be misleading because changing f3 changes the optimizer's solution choices.
 
@@ -98,7 +98,7 @@ GitHub regression tests committed:
 
 **These two new GitHub regression suites have not been run against the complete repository code in this environment.** The full optimizer integration suite and real-trace pilot remain unexecuted. No GitHub Actions were launched.
 
-The carbon **decision-time feasibility** rule currently still uses an optimizer-iteration forecast, while carbon **outcome accounting** uses the workload-execution-time forecast. This may be a valid two-stage planning model only if stated explicitly; it is not a proof that the threshold was met at every execution interval. Reconsider how the carbon class thresholds should be interpreted before the full v2 experiment.
+**Resolved in the opt-in v2 pilot runner:** Decoder feasibility is evaluated against a fixed regional **mean forecast-week** intensity, not an iteration-indexed value. The carbon outcome integrates time-aligned intensity over scheduled execution intervals. Regional mean eligibility does **not** imply that all job-time intensity values satisfy a strict class threshold, and the manuscript must avoid claiming that guarantee.
 
 Once a runnable full repository checkout is available: first run python -m pytest -q tests/test_temporal_cpu_capacity_v2.py tests/test_cpu_carbon_joint_v2.py tests/test_time_aligned_carbon_full_suite.py; then run scripts/run_final_experiment_shard.py with --population-size 4 --max-iterations 2 --carbon-time-accounting repeat for a single real-trace seed, inspect the persisted guide schedules and carbon totals, and only then consider the full cohort.
 
@@ -112,3 +112,12 @@ Once a runnable full repository checkout is available: first run python -m pytes
 - `scripts/run_carbon_v2_preflight.sh` supplies a self-contained local workflow for five small test modules, a **one-seed P=4/T=2** Microsoft trace pilot, and the validator. It does not launch Actions, run the full experimental cohort, or overwrite v1 `__final.json` results.
 
 **Important:** The output validator and preflight shell script are committed but have **not been executed against a complete local checkout** in this environment. They are safeguards awaiting the real integration pilot, not evidence that the 13 optimizers have passed corrected end-to-end tests. Publication remains blocked until the pilot and complete corrected cohort are verified.
+
+
+## Fixed offline planning signal — pilot methodological decision (12 November 2026)
+
+The v2 branch now implements an explicit **offline fixed-plan / time-varying-execution** distinction in scripts/run_final_experiment_shard.py. For all 13 algorithms in the v2 pilot, the fixed planning vector is the 336-row arithmetic mean of the seven regional forecast series: [95.06, 95.33, 302.10, 154.33, 254.05, 191.78, 223.76] gCO2e/kWh (rounded). A workload is planning-eligible on 4/7, 6/7 and 7/7 resource regions for the Critical, Deferred and Flexible thresholds respectively. These values are not direct execution guarantees. The optimizer does **not** map its iteration index to new forecast timestamps in v2, removing artificial nonstationarity.
+
+The carbon objective remains time-integrated GPU-side energy-weighted intensity along each simulated schedule. For runs longer than the frozen 168-hour forecast, explicitly repeating the week is a **counterfactual sensitivity policy**. No claimed real-time UK-grid deployment or measured CO2 reduction follows.
+
+The updated test-tagged output records **fixedmean** in its filename and stores the planning vector and decision scope in metadata; the separate validator recomputes the schedule under the same fixed planning vector and checks timing, CPU/GPU/memory capacity and carbon/energy parity. The full-suite small synthetic test tests/test_carbon_v2_fixed_planning_full_suite.py and scripts/run_carbon_v2_preflight.sh have been updated. **These new end-to-end tests and the full trace pilot have NOT been executed** against a complete checked-out repository; no GitHub Actions were run. Original v1 outputs remain unchanged and must not be relabeled v2.
