@@ -77,3 +77,27 @@ These values were cross-checked with a separate direct sum of actual 336 half-ho
 A provisional consistent **repeat** policy across all four scenarios is recorded in configs/carbon_v2_provisional_pilot_protocol.json. It is intended for *controlled counterfactual simulations*, not real subsequent-week grid forecasts. The configuration is **not locked for publication** until the full implementation is tested end-to-end, coauthors approve its assumptions, and the corrected experimental campaign is rerun. Strict mode remains useful to validate coverage for scenarios shorter than 168 hours.
 
 **Full 13-optimizer integration status:** The two synthetic optimizer smoke tests have been committed but NOT executed in this analysis environment, which has only the carbon-accounting module, not a full runnable checkout of the private GitHub repository. Neither the small real-trace optimizer pilot nor full 1,560-run v2 study has been executed. Do not confuse accounting fixtures with algorithm performance results. No GitHub Actions were launched.
+
+
+## Additional CPU-scheduling validation (12 November 2026)
+
+The validation branch's qpeo/simulator.py was modified to check **concurrent aggregate CPU demand**, in addition to concurrent GPU fraction and memory demand, when scheduling overlapping jobs. Its event intervals now retain (start, finish, gpu_demand, memory_demand, cpu_demand). Resources without CPU limits continue to use infinite CPU capacity. This change will affect scheduling, makespan, energy allocation, and time-aligned carbon exposure, and therefore the legacy numerical results cannot be retained as corrected v2 outputs.
+
+The local test environment imported the existing **exact carbon_accounting.py** and a **verbatim extraction of the new CPU interval scheduling helpers**. The local test command passed **17/17 tests**: 11 carbon accounting tests, 5 temporal CPU helper tests, and one joint CPU scheduling + carbon integration test. These are unit/analytical checks, **not a run against a full checkout of all 13 algorithms**.
+
+Joint synthetic validation:
+- Two jobs each use 7 CPU units and 0.3 GPU for 1 hour, arriving at 0.0 and 0.25 h. The resource has 8 CPU units, 1 GPU, and a 0.3 kW peak power proxy.
+- Carbon intensity is 100 gCO2e/kWh for the first hour, then 400 gCO2e/kWh for the second hour.
+- CPU-constrained execution queues starts to (0.0, 1.0) h, producing 0.18 kWh, **45.00 gCO2e**, **250 gCO2e/kWh**.
+- With unlimited CPU, starts are (0.0, 0.25) h, producing the same 0.18 kWh, **24.75 gCO2e**, **137.5 gCO2e/kWh**.
+- This demonstrates why time-aligned emissions must follow the **actual corrected** schedule. It does not demonstrate real-world or full-method performance.
+
+GitHub regression tests committed:
+- tests/test_temporal_cpu_capacity_v2.py (five full-simulator tests).
+- tests/test_cpu_carbon_joint_v2.py (one full-simulator plus carbon-adapter test).
+
+**These two new GitHub regression suites have not been run against the complete repository code in this environment.** The full optimizer integration suite and real-trace pilot remain unexecuted. No GitHub Actions were launched.
+
+The carbon **decision-time feasibility** rule currently still uses an optimizer-iteration forecast, while carbon **outcome accounting** uses the workload-execution-time forecast. This may be a valid two-stage planning model only if stated explicitly; it is not a proof that the threshold was met at every execution interval. Reconsider how the carbon class thresholds should be interpreted before the full v2 experiment.
+
+Once a runnable full repository checkout is available: first run python -m pytest -q tests/test_temporal_cpu_capacity_v2.py tests/test_cpu_carbon_joint_v2.py tests/test_time_aligned_carbon_full_suite.py; then run scripts/run_final_experiment_shard.py with --population-size 4 --max-iterations 2 --carbon-time-accounting repeat for a single real-trace seed, inspect the persisted guide schedules and carbon totals, and only then consider the full cohort.
