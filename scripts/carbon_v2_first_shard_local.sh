@@ -31,7 +31,7 @@ if [[ "$source_branch" != "carbon-accounting-v2-validation" ]]; then
   exit 3
 fi
 
-source_dirty="$(git status --porcelain --untracked-files=all -- qpeo scripts configs tests requirements.txt pyproject.toml)"
+source_dirty="$(git status --porcelain --untracked-files=all -- qpeo scripts configs tests data requirements.txt pyproject.toml)"
 if [[ -n "$source_dirty" ]]; then
   echo "ERROR: tracked or untracked source files differ from the Git commit:" >&2
   printf '%s\n' "$source_dirty" >&2
