@@ -111,6 +111,12 @@ class CarbonReplay:
 
         return antiderivative(end) - antiderivative(start)
 
+    def planning_mean(self) -> np.ndarray:
+        """Mean regional intensity over the complete frozen forecast."""
+        return np.asarray(
+            self.intensities, dtype=float
+        ).mean(axis=0).copy()
+
     def at_iteration(self,t:int,max_iterations:int)->np.ndarray:
         if max_iterations<1 or not (0<=t<=max_iterations):
             raise ValueError("require max_iterations>=1 and 0<=t<=max_iterations")

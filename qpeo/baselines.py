@@ -34,7 +34,7 @@ def _problem_for_iteration(base_problem: ProblemInstance, cfg: CommonBaselineCon
     expected = tuple(r.name for r in base_problem.resources)
     if replay.slot_names != expected:
         raise ValueError("carbon replay slot order must match problem resource names")
-    return with_carbon_intensities(base_problem, replay.at_iteration(t, cfg.max_iterations))
+    return with_carbon_intensities(base_problem, replay.planning_mean())
 
 
 def _evaluate_population(problem: ProblemInstance, simulator_inputs: SimulatorInputs, pop: np.ndarray, transform=None):

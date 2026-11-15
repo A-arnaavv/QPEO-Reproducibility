@@ -31,11 +31,11 @@ def make_one_resource_dynamic_case():
     settings=ReconstructionQPEOSettings([1/6]*6,1/3,1/3,1/3,.5,.25)
     return problem,qinputs,settings
 
-def test_all_13_algorithms_see_same_dynamic_carbon_replay():
+def test_all_13_algorithms_use_execution_time_carbon():
     problem,qinputs,settings=make_one_resource_dynamic_case()
     suite=run_full_suite(problem,qinputs,settings,[1/6]*6,seeds=[7],population_size=4,max_iterations=2)
     assert len(suite.records)==13
     for rec in suite.records:
         hist=rec.result.guide_objective_history
         assert hist.shape==(3,6)
-        assert np.allclose(hist[:,2],[100.0,200.0,300.0])
+        assert np.allclose(hist[:,2],[150.0,150.0,150.0])

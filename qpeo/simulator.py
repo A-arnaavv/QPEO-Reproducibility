@@ -100,6 +100,7 @@ class SimulatorInputs:
     service_time_hours: np.ndarray
     power_model: PowerModel
     billing_mode: BillingMode
+    carbon_replay: CarbonReplay | None = None
 
     def validate(self, M: int, N: int) -> None:
         service = np.asarray(self.service_time_hours, dtype=float)
@@ -354,6 +355,9 @@ def simulate_fixed_assignment(
     if X.shape != (M, N):
         raise ValueError(f"X must have shape {(M, N)}.")
     inputs.validate(M, N)
+
+    if carbon_replay is None:
+        carbon_replay = inputs.carbon_replay
 
     if carbon_replay is not None:
         carbon_replay.validate()

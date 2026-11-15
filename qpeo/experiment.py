@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from time import perf_counter
 from typing import Sequence, Any
 
@@ -40,6 +40,16 @@ class ExperimentSuite:
 
 def _run_suite(problem, qpeo_inputs, qpeo_settings, scalar_weights, *, seeds, population_size, max_iterations, names):
     simulator_inputs: SimulatorInputs = qpeo_inputs.simulator_inputs
+
+    if qpeo_inputs.carbon_replay is not None:
+        simulator_inputs = replace(
+            simulator_inputs,
+            carbon_replay=qpeo_inputs.carbon_replay,
+        )
+        qpeo_inputs = replace(
+            qpeo_inputs,
+            simulator_inputs=simulator_inputs,
+        )
     records=[]; bcfg=CommonBaselineConfig(population_size,max_iterations,qpeo_inputs.carbon_replay); qcfg=ManuscriptQPEOConfig(population_size=population_size,max_iterations=max_iterations)
     runners={
         "QPEO": lambda s: run_qpeo(problem,qpeo_inputs,qpeo_settings,config=qcfg,seed=s),
