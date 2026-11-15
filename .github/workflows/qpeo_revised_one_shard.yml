@@ -1,0 +1,103 @@
+name: qpeo-revised-one-shard
+
+on:
+  push:
+    branches:
+      - corrected-validation-20261115
+    paths:
+      - ".github/workflows/qpeo_revised_one_shard.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  revised-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout revised branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Run regression tests
+        run: python -m pytest -q
+
+      - name: Run one full revised experiment
+        run: |
+          python scripts/run_revised_experiment_shard.py \
+            --scenario alibaba_gpu_v2023 \
+            --seed-index 0 \
+            --size 64 \
+            --output-dir results/revised/raw
+
+      - name: Validate revised shard
+        run: |
+          python - <<'PY'
+          import json
+          import math
+          import subprocess
+          from pathlib import Path
+
+          folder = Path("results/revised/raw")
+          files = list(folder.glob("*__revised-final.json"))
+
+          assert len(files) == 1, (
+              f"Expected one revised shard; found {len(files)}"
+          )
+
+          data = json.loads(files[0].read_text())
+
+          sha = subprocess.check_output(
+              ["git", "rev-parse", "HEAD"],
+              text=True,
+          ).strip()
+
+          expected = {
+              "QPEO", "PSO", "DE", "GWO", "WOA",
+              "ABC", "GA", "HS", "FA", "ACO",
+              "FPA", "QIEA", "NSGA-II",
+          }
+
+          assert data["schema_version"] == "qpeo-revised-shard-v1"
+          assert data["final_protocol"] is True
+          assert data["git_sha"] == sha
+          assert data["scenario"] == "alibaba_gpu_v2023"
+          assert data["seed_index"] == 0
+          assert data["size"] == 64
+          assert data["population_size"] == 50
+          assert data["max_iterations"] == 500
+          assert data["planning_carbon_rule"] == "fixed_forecast_mean"
+          assert data["carbon_accounting_rule"] == "execution_time_power_integral"
+
+          algorithms = data["algorithms"]
+          assert len(algorithms) == 13
+          assert {a["algorithm"] for a in algorithms} == expected
+
+          for record in algorithms:
+              values = record["guide_objectives"]
+              assert len(values) == 6
+              assert all(math.isfinite(float(x)) for x in values)
+              assert len(record["guide_objective_history"]) == 501
+
+          print("REVISED FULL SHARD VALIDATED")
+          print("Algorithms:", len(algorithms))
+          print("Git SHA:", sha)
+          print("File:", files[0])
+          PY
+
+      - name: Upload verified result
+        uses: actions/upload-artifact@v4
+        with:
+          name: qpeo-revised-alibaba-seed00
+          path: results/revised/raw/*__revised-final.json
+          retention-days: 90
+          if-no-files-found: error
