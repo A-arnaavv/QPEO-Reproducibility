@@ -177,53 +177,102 @@ def _integrate_resource_energy(
 
 
 def _window_capacity_ok(
-    intervals: list[tuple[float, float, float, float]],
+    intervals: list[tuple[float, float, float, float, float]],
     start: float,
     end: float,
     gpu_demand: float,
+    cpu_demand: float,
     memory_demand: float,
     gpu_capacity: float,
+    cpu_capacity: float,
     memory_capacity: float,
 ) -> bool:
-    boundaries={start,end}
-    for a,b,_,_ in intervals:
-        if b>start and a<end:
-            boundaries.add(max(start,a)); boundaries.add(min(end,b))
-    ordered=sorted(boundaries)
-    for left,right in zip(ordered[:-1],ordered[1:]):
-        if right-left<=TIME_ROUNDOFF_EPS_HOURS:
+    boundaries = {start, end}
+
+    for a, b, _, _, _ in intervals:
+        if b > start and a < end:
+            boundaries.add(max(start, a))
+            boundaries.add(min(end, b))
+
+    ordered = sorted(boundaries)
+
+    for left, right in zip(ordered[:-1], ordered[1:]):
+        if right - left <= TIME_ROUNDOFF_EPS_HOURS:
             continue
-        mid=(left+right)/2
-        gpu=gpu_demand; mem=memory_demand
-        for a,b,g,m in intervals:
-            if a<=mid<b:
-                gpu+=g; mem+=m
-        if gpu>gpu_capacity+1e-12 or mem>memory_capacity+1e-12:
+
+        mid = (left + right) / 2
+        gpu = gpu_demand
+        cpu = cpu_demand
+        memory = memory_demand
+
+        for a, b, g, c, m in intervals:
+            if a <= mid < b:
+                gpu += g
+                cpu += c
+                memory += m
+
+        if (
+            gpu > gpu_capacity + 1e-12
+            or cpu > cpu_capacity + 1e-12
+            or memory > memory_capacity + 1e-12
+        ):
             return False
+
     return True
 
 
 def _earliest_feasible_start(
-    intervals: list[tuple[float, float, float, float]],
+    intervals: list[tuple[float, float, float, float, float]],
     arrival: float,
     duration: float,
     gpu_demand: float,
+    cpu_demand: float,
     memory_demand: float,
     gpu_capacity: float,
+    cpu_capacity: float,
     memory_capacity: float,
 ) -> float:
-    if gpu_demand>gpu_capacity+1e-12 or memory_demand>memory_capacity+1e-12:
-        raise ValueError("Workload does not individually fit assigned resource.")
-    candidate=float(arrival)
-    for _ in range(len(intervals)+2):
-        end=candidate+duration
-        if _window_capacity_ok(intervals,candidate,end,gpu_demand,memory_demand,gpu_capacity,memory_capacity):
+    if (
+        gpu_demand > gpu_capacity + 1e-12
+        or cpu_demand > cpu_capacity + 1e-12
+        or memory_demand > memory_capacity + 1e-12
+    ):
+        raise ValueError(
+            "Workload does not individually fit assigned resource."
+        )
+
+    candidate = float(arrival)
+
+    for _ in range(len(intervals) + 2):
+        end = candidate + duration
+
+        if _window_capacity_ok(
+            intervals,
+            candidate,
+            end,
+            gpu_demand,
+            cpu_demand,
+            memory_demand,
+            gpu_capacity,
+            cpu_capacity,
+            memory_capacity,
+        ):
             return candidate
-        future_ends=sorted({b for a,b,_,_ in intervals if b>candidate+1e-12})
+
+        future_ends = sorted({
+            b for a, b, _, _, _ in intervals
+            if b > candidate + 1e-12
+        })
+
         if not future_ends:
             break
-        candidate=future_ends[0]
-    raise RuntimeError("Could not find a temporally feasible start time.")
+
+        candidate = future_ends[0]
+
+    raise RuntimeError(
+        "Could not find a temporally feasible start time."
+    )
+
 
 def simulate_fixed_assignment(
     problem: ProblemInstance,
@@ -238,7 +287,7 @@ def simulate_fixed_assignment(
     --------------------------------
     X selects one resource per workload. Workloads are processed in nondecreasing
     arrival order (original index breaks ties). On the assigned resource, each job
-    starts at the earliest time >= arrival for which both GPU and memory capacity are
+    starts at the earliest time >= arrival for which GPU, CPU, and memory capacities are
     available for its full service interval. This allows sequential and partially
     overlapping trace jobs while enforcing capacity at every simulated time.
     """
@@ -269,18 +318,30 @@ def simulate_fixed_assignment(
     arrivals = np.asarray([w.arrival_time for w in problem.workloads], dtype=float)
     starts = np.zeros(M, dtype=float)
     completion = np.zeros(M, dtype=float)
-    scheduled: list[list[tuple[float,float,float,float]]] = [[] for _ in range(N)]
+    scheduled: list[list[tuple[float,float,float,float,float]]] = [[] for _ in range(N)]
 
     for i in sorted(range(M), key=lambda k: (float(arrivals[k]), k)):
         j=int(assigned[i]); w=problem.workloads[i]; r=problem.resources[j]
         duration=float(service[i,j])
-        st=_earliest_feasible_start(
-            scheduled[j], float(arrivals[i]), duration, float(w.gpu_demand),
-            float(w.memory_demand), float(r.gpu_capacity), float(r.memory_capacity),
+        cpu_limit = (
+            float("inf")
+            if r.cpu_capacity is None
+            else float(r.cpu_capacity)
+        )
+        st = _earliest_feasible_start(
+            scheduled[j],
+            float(arrivals[i]),
+            duration,
+            float(w.gpu_demand),
+            float(w.cpu_demand),
+            float(w.memory_demand),
+            float(r.gpu_capacity),
+            cpu_limit,
+            float(r.memory_capacity),
         )
         en=st+duration
         starts[i]=st; completion[i]=en
-        scheduled[j].append((st,en,float(w.gpu_demand),float(w.memory_demand)))
+        scheduled[j].append((st,en,float(w.gpu_demand),float(w.cpu_demand),float(w.memory_demand)))
 
     idle = np.asarray(inputs.power_model.idle_power_kw, dtype=float)
     dyn = np.asarray(inputs.power_model.dynamic_power_kw, dtype=float)
@@ -289,7 +350,7 @@ def simulate_fixed_assignment(
     allocated = np.zeros(N, dtype=float)
 
     for j, resource in enumerate(problem.resources):
-        gpu_intervals=[(a,b,g) for a,b,g,_ in scheduled[j]]
+        gpu_intervals=[(a,b,g) for a,b,g,_,_ in scheduled[j]]
         energy[j], active[j], allocated[j] = _integrate_resource_energy(
             gpu_intervals, gpu_capacity=float(resource.gpu_capacity),
             idle_power_kw=float(idle[j]), dynamic_power_kw=float(dyn[j]),
