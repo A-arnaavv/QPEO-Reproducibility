@@ -42,6 +42,75 @@ class CarbonReplay:
     def resources(self)->int:
         return len(self.slot_names)
 
+    def integrate_intensity(
+        self,
+        start_hour: float,
+        end_hour: float,
+        resource_index: int,
+    ) -> float:
+        """Integrate stepwise carbon intensity over simulated hours.
+
+        The first simulated hour is aligned with the first forecast row.
+        Forecast values repeat periodically beyond the locked week.
+        The returned quantity has units gCO2e/kWh * hour.
+        """
+        start = float(start_hour)
+        end = float(end_hour)
+
+        if not np.isfinite(start) or not np.isfinite(end):
+            raise ValueError("Simulation times must be finite.")
+        if end < start:
+            raise ValueError("Execution interval ends before it starts.")
+        if not 0 <= resource_index < self.resources:
+            raise IndexError("Invalid carbon-replay resource index.")
+        if end == start:
+            return 0.0
+
+        offsets = np.asarray([
+            (stamp - self.timestamps_utc[0]).total_seconds() / 3600.0
+            for stamp in self.timestamps_utc
+        ])
+        differences = np.diff(offsets)
+        step = float(differences[0])
+
+        if step <= 0 or not np.allclose(
+            differences, step, rtol=0, atol=1e-8
+        ):
+            raise ValueError(
+                "Time-aligned accounting requires a regular forecast grid."
+            )
+
+        values = np.asarray(
+            self.intensities[:, resource_index], dtype=float
+        )
+
+        prefix = np.concatenate((
+            [0.0], np.cumsum(values) * step
+        ))
+
+        period = self.rows * step
+
+        def antiderivative(hour):
+            cycles = np.floor(hour / period)
+            remainder = hour - cycles * period
+
+            if remainder >= period:
+                cycles += 1
+                remainder = 0.0
+
+            index = min(
+                int(np.floor(remainder / step)),
+                self.rows - 1,
+            )
+
+            return float(
+                cycles * prefix[-1]
+                + prefix[index]
+                + (remainder - index * step) * values[index]
+            )
+
+        return antiderivative(end) - antiderivative(start)
+
     def at_iteration(self,t:int,max_iterations:int)->np.ndarray:
         if max_iterations<1 or not (0<=t<=max_iterations):
             raise ValueError("require max_iterations>=1 and 0<=t<=max_iterations")

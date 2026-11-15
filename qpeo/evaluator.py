@@ -57,8 +57,23 @@ def evaluate_objectives(problem:ProblemInstance,X:np.ndarray,state:EvaluationSta
     f1=-float(np.mean(allocated/horizon))
     energy=np.asarray(state.energy_kwh_by_resource,float)
     f2=float(energy.sum())
-    ci=np.asarray([r.carbon_intensity for r in problem.resources],float)
-    f3=float(np.dot(energy,ci)/f2) if f2>0 else float(zero_energy_carbon_value)
+    if state.carbon_emissions_g_by_resource is not None:
+        emissions = np.asarray(
+            state.carbon_emissions_g_by_resource, dtype=float
+        )
+        f3 = (
+            float(emissions.sum() / f2)
+            if f2 > 0 else float(zero_energy_carbon_value)
+        )
+    else:
+        # Legacy behaviour retained for the initial evaluation.
+        ci = np.asarray(
+            [r.carbon_intensity for r in problem.resources], float
+        )
+        f3 = (
+            float(np.dot(energy, ci) / f2)
+            if f2 > 0 else float(zero_energy_carbon_value)
+        )
     f4=horizon
     deadlines=np.asarray([w.deadline for w in problem.workloads],float)
     sla_mask=np.isfinite(deadlines)

@@ -51,6 +51,7 @@ class EvaluationState:
     energy_kwh_by_resource: np.ndarray
     occupied_gpu_hours: np.ndarray
     allocated_gpu_fraction_hours: np.ndarray
+    carbon_emissions_g_by_resource: np.ndarray | None = None
     def validate(self,M:int,N:int):
         if np.asarray(self.completion_times).shape!=(M,): raise ValueError(f"completion_times must have shape {(M,)}")
         if np.asarray(self.energy_kwh_by_resource).shape!=(N,): raise ValueError(f"energy_kwh_by_resource must have shape {(N,)}")
@@ -59,6 +60,14 @@ class EvaluationState:
         if np.any(np.asarray(self.energy_kwh_by_resource)<0): raise ValueError("Energy cannot be negative.")
         if np.any(np.asarray(self.occupied_gpu_hours)<0): raise ValueError("GPU-hours cannot be negative.")
         if np.any(np.asarray(self.allocated_gpu_fraction_hours)<0): raise ValueError("Allocated GPU fraction-hours cannot be negative.")
+        if self.carbon_emissions_g_by_resource is not None:
+            carbon = np.asarray(
+                self.carbon_emissions_g_by_resource, dtype=float
+            )
+            if carbon.shape != (N,):
+                raise ValueError("Carbon emissions have invalid shape.")
+            if np.any(~np.isfinite(carbon)) or np.any(carbon < -1e-9):
+                raise ValueError("Carbon emissions must be finite and non-negative.")
 
 @dataclass(frozen=True)
 class ObjectiveVector:

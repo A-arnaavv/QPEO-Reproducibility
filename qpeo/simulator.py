@@ -5,6 +5,7 @@ from typing import Literal
 
 import numpy as np
 
+from .carbon import CarbonReplay
 from .evaluator import check_constraints
 from .models import EvaluationState, ProblemInstance
 
@@ -120,6 +121,7 @@ class SimulationResult:
     allocated_gpu_hours: np.ndarray
     energy_kwh_by_resource: np.ndarray
     time_average_gpu_utilization: np.ndarray
+    carbon_emissions_g_by_resource: np.ndarray | None = None
 
 
 def _integrate_resource_energy(
@@ -174,6 +176,61 @@ def _integrate_resource_energy(
 
     return float(energy), float(active_hours), float(allocated_gpu_hours)
 
+
+
+def _integrate_resource_carbon(
+    intervals: list[tuple[float, float, float]],
+    *,
+    carbon_replay: CarbonReplay,
+    resource_index: int,
+    gpu_capacity: float,
+    idle_power_kw: float,
+    dynamic_power_kw: float,
+    power_exponent: float,
+) -> float:
+    """Integrate active GPU power against the forecast timeline."""
+    if not intervals:
+        return 0.0
+
+    events = []
+    for start, end, demand in intervals:
+        events.append((float(start), 1, float(demand)))
+        events.append((float(end), 0, -float(demand)))
+
+    events.sort(key=lambda event: (event[0], event[1]))
+
+    previous = events[0][0]
+    active_gpu = 0.0
+    emissions_g = 0.0
+
+    for time, _, delta in events:
+        duration = time - previous
+
+        if duration > TIME_ROUNDOFF_EPS_HOURS and active_gpu > 1e-15:
+            utilization = active_gpu / gpu_capacity
+
+            if utilization > 1.0 + 1e-9:
+                raise ValueError(
+                    "Instantaneous GPU utilization exceeds capacity."
+                )
+
+            utilization = min(max(utilization, 0.0), 1.0)
+            power_kw = (
+                idle_power_kw
+                + dynamic_power_kw * utilization ** power_exponent
+            )
+
+            integrated_ci = carbon_replay.integrate_intensity(
+                previous, time, resource_index
+            )
+            emissions_g += power_kw * integrated_ci
+
+        active_gpu += delta
+        if active_gpu < 0 and abs(active_gpu) < 1e-12:
+            active_gpu = 0.0
+        previous = time
+
+    return float(emissions_g)
 
 
 def _window_capacity_ok(
@@ -280,6 +337,7 @@ def simulate_fixed_assignment(
     inputs: SimulatorInputs,
     *,
     require_formal_feasibility: bool = True,
+    carbon_replay: CarbonReplay | None = None,
 ) -> SimulationResult:
     """Simulate a fixed resource assignment with deterministic temporal capacity.
 
@@ -297,6 +355,14 @@ def simulate_fixed_assignment(
         raise ValueError(f"X must have shape {(M, N)}.")
     inputs.validate(M, N)
 
+    if carbon_replay is not None:
+        carbon_replay.validate()
+        expected_names = tuple(r.name for r in problem.resources)
+        if carbon_replay.slot_names != expected_names:
+            raise ValueError(
+                "Carbon-replay resource order does not match the simulator."
+            )
+
     report = check_constraints(problem, X)
     if require_formal_feasibility and not report.feasible:
         raise ValueError("Infeasible assignment: " + " | ".join(report.violations))
@@ -306,7 +372,10 @@ def simulate_fixed_assignment(
     # Carbon feasibility is checked above on every call. The deterministic temporal
     # schedule itself is carbon-independent, so an identical assignment can reuse it.
     global _SIMULATION_CACHE_HITS, _SIMULATION_CACHE_MISSES
-    cache_key = _simulation_cache_key(problem, X, inputs)
+    cache_key = _simulation_cache_key(problem, X, inputs) + (
+        (id(carbon_replay),) if carbon_replay is not None
+        else (None,)
+    )
     cached = _SIMULATION_CACHE.get(cache_key)
     if cached is not None:
         _SIMULATION_CACHE_HITS += 1
@@ -348,6 +417,11 @@ def simulate_fixed_assignment(
     energy = np.zeros(N, dtype=float)
     active = np.zeros(N, dtype=float)
     allocated = np.zeros(N, dtype=float)
+    emissions = (
+        np.zeros(N, dtype=float)
+        if carbon_replay is not None
+        else None
+    )
 
     for j, resource in enumerate(problem.resources):
         gpu_intervals=[(a,b,g) for a,b,g,_,_ in scheduled[j]]
@@ -356,6 +430,16 @@ def simulate_fixed_assignment(
             idle_power_kw=float(idle[j]), dynamic_power_kw=float(dyn[j]),
             power_exponent=float(inputs.power_model.power_exponent),
         )
+        if carbon_replay is not None:
+            emissions[j] = _integrate_resource_carbon(
+                gpu_intervals,
+                carbon_replay=carbon_replay,
+                resource_index=j,
+                gpu_capacity=float(resource.gpu_capacity),
+                idle_power_kw=float(idle[j]),
+                dynamic_power_kw=float(dyn[j]),
+                power_exponent=float(inputs.power_model.power_exponent),
+            )
 
     avg_util = np.divide(allocated,active,out=np.zeros_like(allocated),where=active>0)
     occupied = active if inputs.billing_mode == "active_resource_hours" else allocated
@@ -364,11 +448,13 @@ def simulate_fixed_assignment(
         energy_kwh_by_resource=energy,
         occupied_gpu_hours=occupied,
         allocated_gpu_fraction_hours=allocated,
+        carbon_emissions_g_by_resource=emissions,
     )
     result = SimulationResult(
         state=state,start_times=starts,completion_times=completion,
         resource_active_hours=active,allocated_gpu_hours=allocated,
         energy_kwh_by_resource=energy,time_average_gpu_utilization=avg_util,
+        carbon_emissions_g_by_resource=emissions,
     )
     _SIMULATION_CACHE[cache_key] = result
     return result
