@@ -47,13 +47,11 @@ def _evaluate_population(problem: ProblemInstance, simulator_inputs: SimulatorIn
     return assignments, objectives
 
 
-def _dynamic_refresh(base_problem, cfg, t, simulator_inputs, pop, transform=None):
-    if cfg.carbon_replay is None:
-        return None
-    current = _problem_for_iteration(base_problem, cfg, t)
-    assignments, objectives = _evaluate_population(current, simulator_inputs, pop, transform)
-    archive = _initialize_archive(pop, assignments, objectives)
-    return current, assignments, objectives, archive
+def _dynamic_refresh(
+    base_problem, cfg, t, simulator_inputs, pop, transform=None
+):
+    """Fixed planning carbon requires no iteration refresh."""
+    return None
 
 
 def _validate_weights(weights: Sequence[float]) -> np.ndarray:
