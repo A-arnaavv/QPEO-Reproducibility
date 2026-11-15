@@ -1,0 +1,278 @@
+{
+  "protocol_version": "v7-fixed-planning-execution-time-carbon",
+  "status": "revised-pre-results",
+  "primary": {
+    "population_size": 50,
+    "max_iterations": 500,
+    "runs_per_algorithm": 30,
+    "scalar_guide_weights": [
+      0.16666666666666666,
+      0.16666666666666666,
+      0.16666666666666666,
+      0.16666666666666666,
+      0.16666666666666666,
+      0.16666666666666666
+    ],
+    "ecological_compatibility": {
+      "alpha_performance": 0.3333333333333333,
+      "beta_thermal": 0.3333333333333333,
+      "gamma_carbon": 0.3333333333333333
+    },
+    "dependency_threshold": 0.5,
+    "dependency_strength": 0.25,
+    "billing_mode": "allocated_gpu_hours",
+    "seeds": [
+      104729,
+      104743,
+      104759,
+      104761,
+      104773,
+      104779,
+      104789,
+      104801,
+      104803,
+      104827,
+      104831,
+      104849,
+      104851,
+      104869,
+      104879,
+      104891,
+      104911,
+      104917,
+      104933,
+      104947,
+      104953,
+      104959,
+      104971,
+      104987,
+      104999,
+      105019,
+      105023,
+      105031,
+      105037,
+      105071
+    ]
+  },
+  "sensitivity": {
+    "guide_weight_profiles": {
+      "equal": [
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666
+      ],
+      "performance_emphasis": [
+        0.25,
+        0.125,
+        0.125,
+        0.25,
+        0.125,
+        0.125
+      ],
+      "sustainability_emphasis": [
+        0.125,
+        0.25,
+        0.25,
+        0.125,
+        0.125,
+        0.125
+      ]
+    },
+    "ecological_weight_profiles": {
+      "equal": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "performance_emphasis": [
+        0.5,
+        0.25,
+        0.25
+      ],
+      "carbon_emphasis": [
+        0.25,
+        0.25,
+        0.5
+      ]
+    },
+    "dependency_thresholds": [
+      0.3,
+      0.5,
+      0.7
+    ],
+    "dependency_strengths": [
+      0.1,
+      0.25,
+      0.5
+    ]
+  },
+  "hypervolume": {
+    "reference_rule": "For each dataset/scenario, normalize the six minimization objectives using pooled finite objective values from all algorithms and all pre-registered seeds, then use reference point [1.1,1.1,1.1,1.1,1.1,1.1]. The same pooled min/max transform and reference point are applied to every algorithm in that scenario.",
+    "sobol_samples_power": 18,
+    "scramble_seed": 20261110
+  },
+  "unresolved_before_final_runs": [],
+  "resource_environment": {
+    "config": "configs/resource_environment_v1.json",
+    "status": "locked-pre-results",
+    "primary_cost_profile": "primary_tier_index",
+    "primary_power_idle_fraction": 0,
+    "service_speed_rule": "FP32 throughput relative to RTX A6000 (38.7 TFLOPS)"
+  },
+  "carbon_replay": {
+    "config": "configs/carbon_replay_v1.json",
+    "status": "locked-pre-results",
+    "source": "NESO regional carbon-intensity forecast",
+    "window_utc": "2026-01-05 through 2026-01-11",
+    "threshold_rule": "worst-case row minimum / worst-case row 3rd-lowest / replay maximum + epsilon (guarantees >=1/3/all carbon-feasible resources per replay step)",
+    "snapshot": "data/carbon/neso_regional_2026-01-05_2026-01-11.csv",
+    "snapshot_rows_in_locked_window": 336,
+    "derived_thresholds_gco2_per_kwh": {
+      "critical": 192,
+      "deferred": 281,
+      "flexible": 391
+    }
+  },
+  "pending_artifacts_before_final_runs": [],
+  "dynamic_carbon": {
+    "status": "implemented-and-regression-tested",
+    "applies_to": "QPEO and all 12 baselines",
+    "planning": "fixed arithmetic mean of frozen regional forecast",
+    "execution": "time-aligned power-weighted carbon integration",
+    "simulation_start": "first frozen carbon-replay timestamp",
+    "forecast_extrapolation": "periodic repetition after 336 half-hour slots",
+    "iteration_refresh": "none; planning signal is fixed"
+  },
+  "trace_scenarios": {
+    "alibaba_gpu_v2023": {
+      "status": "locked-pre-results",
+      "config": "configs/trace_alibaba_gpu_v2023.json",
+      "snapshot": "data/alibaba_gpu_v2023_eligible_succeeded.csv",
+      "upstream_blob_sha": "bd82505791c723c5b11486ef457fb338529912c0",
+      "eligible_count": 178,
+      "primary_jobs": 64,
+      "scalability_jobs": [
+        32,
+        64,
+        128
+      ],
+      "primary_window": [
+        "openb-pod-3131",
+        "openb-pod-5985"
+      ],
+      "scope": "Succeeded single/fractional-GPU jobs only; num_gpu=1 and 0<gpu_milli<=1000",
+      "deadline_rule": "source observed end-to-end time (deletion_time - creation_time)",
+      "qos_carbon_mapping": {
+        "LS": "critical",
+        "Burstable": "deferred",
+        "BE": "flexible"
+      },
+      "service_time_rule": "source observed runtime scaled by locked FP32 resource speed factors"
+    },
+    "microsoft_elasticflow_itp_cluster08": {
+      "status": "locked-pre-results",
+      "config": "configs/trace_elasticflow_itp.json",
+      "snapshot": "data/elasticflow_cluster08_single_gpu.csv",
+      "raw_archive_blob_sha": "8147e243486d25a21abb12c1e50cbcf90aa72ebc",
+      "experiment_archive_blob_sha": "bf9e3ccae14b35410a213b2528c02e71906f8890",
+      "eligible_count": 12558,
+      "cluster_rule": "cluster with largest positive-duration single-GPU raw-job count",
+      "primary_jobs": 64,
+      "scalability_jobs": [
+        32,
+        64,
+        128
+      ],
+      "primary_window": [
+        "fd68fa2d-ed9f-6fe1-0a85-877c7b6de8da",
+        "42dfd273-4486-8e16-9a12-9f4ce099e4b5"
+      ],
+      "source_fields": "raw submission_time, duration and num_gpu; matching authors' experiment-trace deadline",
+      "missing_resource_fields": "CPU, memory, bandwidth set to zero/non-binding because the source does not provide them",
+      "carbon_class_rule": "tertiles of source-generated deadline slack ratio",
+      "service_time_rule": "raw duration scaled by locked FP32 resource speed factors"
+    },
+    "helios_earth": {
+      "status": "locked-pre-results",
+      "config": "configs/trace_helios_earth.json",
+      "snapshot": "data/helios_earth_selected_128.csv",
+      "archive_blob_sha": "1a48d5e0fb816fe9bbf1ad7086e7dec90923e5c6",
+      "archive_sha256": "3d22a5f6c0ae669e2fcbfe4200fa9c48664507bc397c677bad8f085222c032ac",
+      "eligible_count": 293903,
+      "cluster_rule": "Helios cluster with largest completed single-GPU pool",
+      "primary_jobs": 64,
+      "scalability_jobs": [
+        32,
+        64,
+        128
+      ],
+      "primary_window": [
+        "1738622",
+        "1739705"
+      ],
+      "source_fields": "gpu_num, cpu_num, submit_time, start_time, end_time, duration, queue, state",
+      "missing_resource_fields": "memory and bandwidth set to zero/non-binding because the source does not provide them",
+      "carbon_class_rule": "deferred for all jobs because Helios exposes no source priority/SLA class",
+      "deadline_rule": "source observed submit_time to end_time",
+      "service_time_rule": "source duration scaled by locked FP32 resource speed factors"
+    },
+    "alibaba_spot_gpu_2026_a100": {
+      "status": "locked-pre-results",
+      "config": "configs/trace_alibaba_spot_a100.json",
+      "snapshot": "data/alibaba_spot_a100_selected_128.csv",
+      "upstream_blob_sha": "f2a0dcbc26b5a1a047e49a7efa886e86ec9cde32",
+      "eligible_count": 83416,
+      "source_gpu_model": "A100-SXM4-80GB",
+      "source_fp32_tflops": 19.5,
+      "primary_jobs": 64,
+      "scalability_jobs": [
+        32,
+        64,
+        128
+      ],
+      "primary_window": [
+        "441953",
+        "298924"
+      ],
+      "scope": "single-worker A100 jobs with 0<gpu_request<=1, cpu_request<=16, positive duration, job_type in {HP,Spot}",
+      "deadline_rule": "HP: arrival + source duration; Spot: infinity and excluded from SLA denominator",
+      "carbon_class_rule": "HP=critical; Spot=flexible",
+      "service_time_rule": "source A100 duration scaled by source_fp32/target_resource_fp32"
+    }
+  },
+  "final_run_harness": {
+    "status": "revised-smoke-tested; full results not yet generated",
+    "shard_runner": "scripts/run_revised_experiment_shard.py",
+    "aggregator": "scripts/aggregate_final_results.py",
+    "unit_of_checkpoint": "one scenario x one locked seed; contains all 13 algorithms",
+    "expected_final_shards": 120,
+    "expected_final_algorithm_rows": 1560,
+    "primary_size": 64,
+    "population_size": 50,
+    "max_iterations": 500,
+    "seeds": 30,
+    "smoke_validation": {
+      "scenarios": 4,
+      "algorithms_per_scenario": 13,
+      "population_size": 6,
+      "max_iterations": 2,
+      "workloads": 32,
+      "status": "executed-and-output-validated"
+    },
+    "simulation_memoization": {
+      "status": "validated-before-final-results",
+      "scope": "per algorithm; cold cache at algorithm start",
+      "cached_component": "deterministic temporal schedule simulation for identical assignment matrices",
+      "recomputed_on_every_evaluation": [
+        "dynamic carbon feasibility",
+        "carbon-weighted objective f3",
+        "all six objective values from current problem state"
+      ],
+      "fairness_rule": "cache is cleared before every algorithm; no cross-algorithm reuse",
+      "benchmark_note": "real-scenario P=10,T=20 benchmark showed cache hit rates from 10% to 94% depending on algorithm"
+    }
+  }
+}
