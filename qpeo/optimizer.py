@@ -198,7 +198,21 @@ def run_qpeo(
             kappa_max=cfg.kappa_max,
             tau_carbon=cfg.tau_carbon,
         )
-        # Fixed planning carbon needs no population refresh.
+        if inputs.carbon_replay is not None:
+            problem = _qpeo_problem_for_iteration(base_problem, inputs, t, cfg.max_iterations)
+            omega = _omega_for_problem(problem, inputs, settings)
+            assignments = []
+            objectives = []
+            archive = ParetoArchive()
+            for n in range(cfg.population_size):
+                X_now, obj_now = _evaluate_theta(
+                    problem, population[n], omega, inputs.simulator_inputs,
+                    kappa=kappa, ci_ref=cfg.ci_ref,
+                )
+                assignments.append(X_now)
+                objectives.append(obj_now)
+                archive.update(population[n], X_now, obj_now)
+            guide = _guide_index(objectives, settings.scalar_weights)
         theta_best = population[guide].copy()
 
         for n in range(cfg.population_size):

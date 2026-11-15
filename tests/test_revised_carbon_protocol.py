@@ -135,3 +135,36 @@ def test_all_13_algorithms_use_execution_time_carbon():
         assert history[:, 2] == pytest.approx(
             [150.0, 150.0, 150.0]
         ), record.algorithm
+
+def test_qpeo_refreshes_population_for_changing_kappa(monkeypatch):
+    from qpeo.config import ManuscriptQPEOConfig
+    from qpeo.operators import kappa_schedule
+    import qpeo.optimizer as optimizer
+
+    problem, inputs, settings = make_case()
+    config = ManuscriptQPEOConfig(
+        population_size=4,
+        max_iterations=2,
+    )
+
+    observed_kappa = []
+    original_evaluate = optimizer._evaluate_theta
+
+    def recorded_evaluate(*args, **kwargs):
+        observed_kappa.append(float(kwargs["kappa"]))
+        return original_evaluate(*args, **kwargs)
+
+    monkeypatch.setattr(
+        optimizer, "_evaluate_theta", recorded_evaluate
+    )
+
+    optimizer.run_qpeo(
+        problem, inputs, settings,
+        config=config, seed=7,
+    )
+
+    # Initial population + refresh and proposals per iteration.
+    assert len(observed_kappa) == 20
+    assert np.allclose(observed_kappa[:4], kappa_schedule(0))
+    assert np.allclose(observed_kappa[4:12], kappa_schedule(1))
+    assert np.allclose(observed_kappa[12:20], kappa_schedule(2))
