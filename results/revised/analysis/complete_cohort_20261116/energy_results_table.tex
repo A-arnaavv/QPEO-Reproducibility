@@ -1,0 +1,29 @@
+\begin{table*}[!htbp]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{4.5pt}
+\caption{Simulated GPU energy consumption (kWh) across four trace-derived workload scenarios. Values are reported as mean $\pm$ standard deviation over 30 matched random seeds. Lower values indicate reduced modelled GPU-side energy consumption. The estimates exclude host-system and idle power consumption.}
+\label{tab:energy_results}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Algorithm} & \textbf{Alibaba v2023} & \textbf{ElasticFlow} & \textbf{Helios Earth} & \textbf{Spot-GPU 2026} \\
+\midrule
+PSO & $21.76 \pm 0.32$ & $9.18 \pm 0.15$ & $16.44 \pm 0.15$ & $44.32 \pm 0.47$ \\
+DE & $21.32 \pm 0.05$ & $8.86 \pm 0.16$ & $16.42 \pm 0.12$ & $44.05 \pm 0.39$ \\
+GWO & $21.41 \pm 0.20$ & $8.92 \pm 0.17$ & $16.45 \pm 0.10$ & $44.86 \pm 0.27$ \\
+WOA & $21.20 \pm 0.00$ & $9.38 \pm 0.13$ & $15.66 \pm 0.00$ & $43.01 \pm 0.30$ \\
+ABC & $22.12 \pm 0.23$ & $9.51 \pm 0.14$ & $16.83 \pm 0.21$ & $44.96 \pm 0.37$ \\
+GA & $21.59 \pm 0.20$ & $9.01 \pm 0.18$ & $16.48 \pm 0.12$ & $44.19 \pm 0.31$ \\
+HS & $22.13 \pm 0.22$ & $9.45 \pm 0.13$ & $16.76 \pm 0.13$ & $44.81 \pm 0.42$ \\
+FA & $22.90 \pm 0.47$ & $9.68 \pm 0.11$ & $16.97 \pm 0.23$ & $45.39 \pm 0.26$ \\
+ACO & $21.20 \pm 0.00$ & $8.93 \pm 0.11$ & $16.09 \pm 0.08$ & $43.91 \pm 0.37$ \\
+FPA & $21.79 \pm 0.24$ & $9.34 \pm 0.11$ & $16.44 \pm 0.19$ & $44.07 \pm 0.46$ \\
+QIEA & $21.30 \pm 0.02$ & $9.03 \pm 0.14$ & $16.76 \pm 0.16$ & $44.73 \pm 0.51$ \\
+NSGA-II & $22.14 \pm 0.42$ & $9.29 \pm 0.14$ & $16.76 \pm 0.25$ & $45.23 \pm 0.49$ \\
+\textbf{QPEO (Ours)} & $21.97 \pm 0.29$ & $9.48 \pm 0.05$ & $16.54 \pm 0.08$ & $45.19 \pm 0.24$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

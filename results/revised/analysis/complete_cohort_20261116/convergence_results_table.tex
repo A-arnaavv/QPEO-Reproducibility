@@ -1,0 +1,18 @@
+\begin{table}[!htbp]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{4pt}
+\caption{Mean initial and final QPEO guiding-solution objective values over 30 matched random seeds per scenario ($P=50$, $T=500$). $f_2$ denotes modelled GPU energy consumption (kWh), while $f_5$ denotes finite-deadline violation percentage. Lower values are preferable.}
+\label{tab:guide_trajectory}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Scenario} & \textbf{$f_2(0)$} & \textbf{$f_2(500)$} & \textbf{$f_5(0)$} & \textbf{$f_5(500)$} \\
+\midrule
+Alibaba GPU v2023 & 22.68 & 21.97 & 60.78 & 49.11 \\
+Microsoft ElasticFlow & 9.90 & 9.48 & 96.41 & 94.01 \\
+SenseTime Helios & 16.91 & 16.54 & 95.78 & 93.28 \\
+Alibaba Spot-GPU & 45.63 & 45.19 & 79.70 & 64.39 \\
+\bottomrule
+\end{tabular}
+\end{table}

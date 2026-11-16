@@ -1,0 +1,29 @@
+\begin{table*}[!htbp]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{4.5pt}
+\caption{Energy-weighted carbon intensity (gCO$_2$e/kWh) across four trace-derived workload scenarios. Values are reported as mean $\pm$ standard deviation over 30 matched random seeds. Lower values indicate lower emissions per unit of modelled GPU energy consumption and do not necessarily imply lower total carbon emissions.}
+\label{tab:carbon_results}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Algorithm} & \textbf{Alibaba v2023} & \textbf{ElasticFlow} & \textbf{Helios Earth} & \textbf{Spot-GPU 2026} \\
+\midrule
+PSO & $110.18 \pm 4.11$ & $119.83 \pm 6.80$ & $115.31 \pm 8.00$ & $107.90 \pm 2.62$ \\
+DE & $105.54 \pm 2.20$ & $138.78 \pm 11.19$ & $113.59 \pm 9.93$ & $108.84 \pm 1.90$ \\
+GWO & $107.83 \pm 4.99$ & $127.86 \pm 8.21$ & $109.76 \pm 0.79$ & $109.46 \pm 1.51$ \\
+WOA & $108.23 \pm 0.00$ & $114.41 \pm 6.92$ & $103.31 \pm 0.00$ & $105.72 \pm 0.72$ \\
+ABC & $111.83 \pm 4.55$ & $140.61 \pm 7.16$ & $141.93 \pm 9.58$ & $113.27 \pm 3.82$ \\
+GA & $106.08 \pm 3.38$ & $136.88 \pm 9.76$ & $119.44 \pm 9.04$ & $108.50 \pm 1.53$ \\
+HS & $110.35 \pm 2.38$ & $147.00 \pm 8.07$ & $143.33 \pm 9.43$ & $112.43 \pm 3.94$ \\
+FA & $119.78 \pm 6.46$ & $147.54 \pm 7.07$ & $151.19 \pm 8.11$ & $119.90 \pm 5.99$ \\
+ACO & $108.23 \pm 0.00$ & $121.37 \pm 4.98$ & $110.96 \pm 0.61$ & $106.09 \pm 1.92$ \\
+FPA & $110.06 \pm 3.14$ & $115.33 \pm 7.17$ & $118.18 \pm 8.04$ & $105.23 \pm 2.49$ \\
+QIEA & $103.60 \pm 1.47$ & $135.21 \pm 10.15$ & $118.69 \pm 7.04$ & $109.48 \pm 0.56$ \\
+NSGA-II & $116.97 \pm 6.91$ & $152.30 \pm 10.31$ & $143.04 \pm 14.71$ & $114.04 \pm 3.97$ \\
+\textbf{QPEO (Ours)} & $107.79 \pm 3.26$ & $102.02 \pm 1.85$ & $109.26 \pm 0.98$ & $107.55 \pm 0.61$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

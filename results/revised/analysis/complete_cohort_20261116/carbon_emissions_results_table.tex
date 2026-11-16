@@ -1,0 +1,29 @@
+\begin{table*}[!htbp]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{4.5pt}
+\caption{Total modelled GPU carbon emissions (gCO$_2$e) across four trace-derived workload scenarios. Values represent mean $\pm$ standard deviation over 30 matched random seeds. Emissions are obtained from the execution-time GPU energy and carbon-intensity accounting model; they are not direct measurements of operational datacentre emissions. Lower values indicate reduced modelled emissions.}
+\label{tab:emissions_results}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Algorithm} & \textbf{Alibaba v2023} & \textbf{ElasticFlow} & \textbf{Helios Earth} & \textbf{Spot-GPU 2026} \\
+\midrule
+PSO & $2397.93 \pm 107.62$ & $1099.61 \pm 62.83$ & $1895.86 \pm 139.27$ & $4783.56 \pm 154.28$ \\
+DE & $2250.26 \pm 44.72$ & $1229.18 \pm 93.61$ & $1865.51 \pm 172.88$ & $4795.10 \pm 117.56$ \\
+GWO & $2309.95 \pm 128.68$ & $1138.77 \pm 52.74$ & $1805.72 \pm 20.15$ & $4909.98 \pm 74.06$ \\
+WOA & $2294.08 \pm 0.00$ & $1073.30 \pm 68.27$ & $1618.22 \pm 0.01$ & $4547.07 \pm 6.90$ \\
+ABC & $2474.19 \pm 118.01$ & $1336.08 \pm 55.05$ & $2388.50 \pm 171.16$ & $5093.11 \pm 185.08$ \\
+GA & $2291.07 \pm 85.09$ & $1232.43 \pm 70.30$ & $1968.97 \pm 155.22$ & $4794.26 \pm 94.31$ \\
+HS & $2441.87 \pm 61.33$ & $1389.22 \pm 69.98$ & $2402.45 \pm 159.79$ & $5039.17 \pm 209.92$ \\
+FA & $2742.74 \pm 165.66$ & $1427.81 \pm 67.87$ & $2566.75 \pm 147.62$ & $5443.15 \pm 278.79$ \\
+ACO & $2294.08 \pm 0.00$ & $1083.33 \pm 33.95$ & $1785.62 \pm 8.13$ & $4658.60 \pm 114.97$ \\
+FPA & $2398.70 \pm 73.01$ & $1076.76 \pm 69.96$ & $1943.59 \pm 139.71$ & $4638.27 \pm 149.58$ \\
+QIEA & $2207.08 \pm 28.91$ & $1220.80 \pm 84.74$ & $1989.60 \pm 131.57$ & $4896.89 \pm 65.10$ \\
+NSGA-II & $2591.06 \pm 189.74$ & $1414.80 \pm 84.86$ & $2398.71 \pm 259.30$ & $5159.04 \pm 202.09$ \\
+\textbf{QPEO (Ours)} & $2368.04 \pm 70.14$ & $967.46 \pm 18.09$ & $1807.45 \pm 19.15$ & $4859.91 \pm 41.47$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
