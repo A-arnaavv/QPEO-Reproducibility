@@ -1,0 +1,25 @@
+{
+  "schema": "qpeo-ablation-T500-v1",
+  "source_git_sha": "220ec284d24d92c07ccd129f593c3e4352216401",
+  "scenario": "helios_earth",
+  "seed_index": 0,
+  "seed": 104729,
+  "variant": "without_EBPP",
+  "variant_overrides": {
+    "stagnation_iterations": 501
+  },
+  "workload_count": 64,
+  "population_size": 50,
+  "max_iterations": 500,
+  "objectives": [
+    -0.3957062134770992,
+    16.6047122121171,
+    108.07161393234766,
+    30.120881294964033,
+    93.75,
+    55.09575833295628
+  ],
+  "emissions_g": 1794.4980476456576,
+  "elapsed_seconds": 65.35948266698688,
+  "archive_size": 26
+}

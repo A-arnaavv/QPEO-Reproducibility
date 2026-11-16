@@ -1,0 +1,25 @@
+{
+  "schema": "qpeo-ablation-T500-v1",
+  "source_git_sha": "220ec284d24d92c07ccd129f593c3e4352216401",
+  "scenario": "alibaba_spot_gpu_2026_a100",
+  "seed_index": 1,
+  "seed": 104743,
+  "variant": "without_EBPP",
+  "variant_overrides": {
+    "stagnation_iterations": 501
+  },
+  "workload_count": 64,
+  "population_size": 50,
+  "max_iterations": 500,
+  "objectives": [
+    -0.41696693626983045,
+    45.45918018608368,
+    107.76689801078047,
+    78.57231614708233,
+    72.72727272727273,
+    150.48270293842444
+  ],
+  "emissions_g": 4898.994834767372,
+  "elapsed_seconds": 72.74573470799078,
+  "archive_size": 17
+}

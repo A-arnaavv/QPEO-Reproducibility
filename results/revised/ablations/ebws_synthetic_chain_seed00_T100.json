@@ -1,0 +1,37 @@
+{
+  "type": "synthetic_EBWS_operator_sensitivity",
+  "source_git_sha": "220ec284d24d92c07ccd129f593c3e4352216401",
+  "scenario": "alibaba_gpu_v2023",
+  "seed": 104729,
+  "population_size": 50,
+  "max_iterations": 100,
+  "graph": "eight_disjoint_directed_chains_of_eight_tasks",
+  "dependency_edges": 56,
+  "dependency_weight": 1.0,
+  "dependency_threshold": 0.5,
+  "ebws_strength": 0.25,
+  "variants": {
+    "EBWS_disabled": {
+      "objectives": [
+        -0.04971229345541943,
+        22.363803084702027,
+        121.36366644158252,
+        308.1336111111111,
+        45.3125,
+        73.81430134948637
+      ],
+      "emissions_g": 2714.1531379370113
+    },
+    "EBWS_enabled": {
+      "objectives": [
+        -0.04110353853840227,
+        21.786480722591754,
+        110.98398446824469,
+        308.1336111111111,
+        54.6875,
+        72.89367794820753
+      ],
+      "emissions_g": 2417.9504381338356
+    }
+  }
+}

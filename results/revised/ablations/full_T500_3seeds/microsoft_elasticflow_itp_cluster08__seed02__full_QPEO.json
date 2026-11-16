@@ -1,0 +1,23 @@
+{
+  "schema": "qpeo-ablation-T500-v1",
+  "source_git_sha": "220ec284d24d92c07ccd129f593c3e4352216401",
+  "scenario": "microsoft_elasticflow_itp_cluster08",
+  "seed_index": 2,
+  "seed": 104759,
+  "variant": "full_QPEO",
+  "variant_overrides": {},
+  "workload_count": 64,
+  "population_size": 50,
+  "max_iterations": 500,
+  "objectives": [
+    -0.39768616456919353,
+    9.458326627595545,
+    100.52755644151256,
+    16.683709032773784,
+    92.1875,
+    31.186591765326376
+  ],
+  "emissions_g": 950.8224638978722,
+  "elapsed_seconds": 120.86657191599079,
+  "archive_size": 26
+}
