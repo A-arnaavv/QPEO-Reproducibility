@@ -1,5 +1,24 @@
 # QPEO reproducibility rebuild — v5
 
+
+## Current manuscript benchmark — corrected evaluation (16 November 2026)
+
+The results reported in the current QPEO manuscript are based on the completed corrected scheduling and carbon-accounting protocol.
+
+The validated comparative evaluation comprises four trace-derived workload scenarios, thirteen algorithms (QPEO and twelve baselines), thirty matched random seeds per scenario, and six scheduling objectives. All algorithms use a population size of P=50 and T=500 optimisation iterations.
+
+The corrected benchmark contains 120 validated scenario–seed experiments and 1,560 algorithm-level results. Across 288 paired Wilcoxon comparisons with study-wide Bonferroni correction at familywise alpha=0.01, 81 significant comparisons favour QPEO, 80 favour baselines, and 127 are not statistically significant.
+
+The authoritative corrected results are located at:
+
+- `results/revised/raw/` — 120 validated experimental records.
+- `results/revised/analysis/complete_cohort_20261116/` — final statistical outputs, tables, and figures.
+
+The earlier results in `results/raw/` and `results/analysis/` belong to the historical pre-correction evaluation. Their statistical totals (76/108/104) are superseded and must not be used to interpret the current manuscript.
+
+The reported findings concern reconstructed trace-driven scheduling simulations, not physical cloud–edge deployments. Energy-weighted carbon intensity and total modelled carbon emissions are distinct metrics.
+
+
 This repository reconstructs the experimental implementation of **Quantum Pollination
 Ecology Optimization (QPEO)** from the current manuscript after loss of the original
 codebase.
@@ -25,7 +44,7 @@ The project distinguishes between:
 - explicit-reference Sobol hypervolume estimator
 - 13-algorithm experiment suite
 
-## Current primary-study status (10 November 2026)
+## Historical pre-correction benchmark (10 November 2026; superseded)
 **Primary computation and validation are complete.** All 120 locked
 scenario-seed shards are committed in `results/raw/`: four trace-based simulated
 scenarios, 30 predeclared seeds each, 13 algorithms, 1,560 algorithm runs.
@@ -53,7 +72,7 @@ result retained. Helios seed 0 was computed under an earlier source commit
 with the same experiment logic; later changes included documentation and
 dependency pinning. That dependency/source provenance must remain disclosed.
 
-**Remaining before submission:**
+**Historical checklist (10 November 2026; superseded):**
 - [ ] Complete and report carefully scoped ablations, sensitivity and robustness
       checks, or justify transparently any studies not performed; do not
       silently change the locked primary protocol
